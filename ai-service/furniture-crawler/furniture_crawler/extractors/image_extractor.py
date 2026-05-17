@@ -43,6 +43,10 @@ def extract_image_urls(response, product_jsonld=None):
             
     # Remove duplicates and empty strings
     cleaned_urls = [url for url in image_urls if url]
+
+    # Tekrarları sil ve SADECE İLK 2 FOTOĞRAFI AL (Kısıtlama 3)
+    unique_urls = list(dict.fromkeys(cleaned_urls))
+    return unique_urls[:2]
     
     # Return unique URLs while preserving order
-    return list(dict.fromkeys(cleaned_urls))
+    #return list(dict.fromkeys(cleaned_urls))

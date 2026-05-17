@@ -8,11 +8,21 @@ NEWSPIDER_MODULE = "furniture_crawler.spiders"
 # Obey robots.txt rules - set to False to ensure we can scrape
 ROBOTSTXT_OBEY = False
 
+
+ITEM_PIPELINES = {
+    "furniture_crawler.pipelines.DuplicatesPipeline": 1,
+    "furniture_crawler.pipelines.DataEnrichmentPipeline": 2,
+    "furniture_crawler.pipelines.JsonExportPipeline": 3,
+    "furniture_crawler.pipelines.FurnitureImagePipeline": 4,
+}
+
 # Configure item pipelines
+"""
 ITEM_PIPELINES = {
     "furniture_crawler.pipelines.FurnitureImagePipeline": 1,
     "furniture_crawler.pipelines.JsonExportPipeline": 2,
 }
+"""
 
 # Image Pipeline settings
 IMAGES_STORE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "output", "images")

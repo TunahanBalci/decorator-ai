@@ -2,17 +2,90 @@ import os
 import json
 from scrapy.pipelines.images import ImagesPipeline
 from itemadapter import ItemAdapter
+from scrapy.exceptions import DropItem
 
+
+##### sonradan ekledim
+class DuplicatesPipeline:
+    def __init__(self):
+        self.ids_seen = set()
+        self.names_seen = set()
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        raw_id = adapter.get('id')
+        raw_name = adapter.get('name')
+        
+        # 1. Eğer ID boş geldiyse, direkt ele ki veritabanını bozmasın
+        if not raw_id or not raw_name:
+            raise DropItem("HATA: Ürünün ID'si veya adı yok (None).")
+            
+        # 2. ID'nin başındaki/sonundaki boşlukları sil ve büyük harfe çevir (Standartlaştırma)
+        clean_id = str(raw_id).strip().upper()
+
+
+        base_name = str(raw_name).split(',')[0].strip().lower()
+
+        if clean_id in self.ids_seen or base_name in self.names_seen:
+            raise DropItem(f"Kopya ürün elendi: {clean_id} - {base_name}")
+        else:
+            self.ids_seen.add(clean_id)
+            self.names_seen.add(base_name)
+            # Temizlenmiş ve standartlaşmış ID'yi item'a geri yaz
+            item['id'] = clean_id 
+            return item
+
+class DataEnrichmentPipeline:
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        
+        attributes = {
+            "color": ["unknown"],
+            "material": ["unknown"],
+            "style": ["modern"],
+            "room": ["unknown"],
+            "temperature": "unknown",
+            "size": "unknown"
+        }
+
+        # BREADCRUMB VERİSİNİ KULLANMA
+        breadcrumbs = adapter.get('breadcrumbs', [])
+        
+        if len(breadcrumbs) >= 3:
+            # Örnek Breadcrumb: ["Ana sayfa", "Yatak Odası", "Gardırop", "Luna Gardırop"]
+            
+            # 1. Ana Kategori / Oda Tipi (Genelde 2. sıradadır: index 1)
+            # Örn: "Yatak Odası"
+            attributes['room'] = [breadcrumbs[1]]
+            
+            # 2. Alt Kategori (Genelde sondan bir öncekidir: index -2)
+            # Örn: "Gardırop"
+            adapter['category'] = breadcrumbs[-2]
+            
+        else:
+            adapter['category'] = 'Mobilya' # Bulunamazsa varsayılan
+
+        # ... (Materyal ve renk regex kontrollerin kalabilir veya bunu tamamen LLM'e bırakabilirsin) ...
+
+        adapter['attributes'] = attributes
+        
+        # Temiz bir JSON için geçici breadcrumbs listesini silebilirsin 
+        # (veya JSON'da görünmesini istiyorsan silme)
+        if 'breadcrumbs' in adapter:
+            del adapter['breadcrumbs']
+            
+        return item
+#########
 class FurnitureImagePipeline(ImagesPipeline):
     def file_path(self, request, response=None, info=None, *, item=None):
-        # Override file path to save images neatly by product_id
+        # Override file path to save images neatly by id
         image_name = request.url.split('/')[-1]
         
         # fallback to default hash-based name if no product id
-        if item and item.get("product_id"):
+        if item and item.get("id"):
             # clean up any query strings from the image name
             image_name = image_name.split('?')[0]
-            return f'products/{item["product_id"]}/{image_name}'
+            return f'products/{item["id"]}/{image_name}'
             
         return super().file_path(request, response, info, item=item)
 
