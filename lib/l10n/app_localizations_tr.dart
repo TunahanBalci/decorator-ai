@@ -147,7 +147,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get onboardingLivingFamily => 'Ailemle yaşıyorum';
 
   @override
-  String get navHome => 'Ana';
+  String get navHome => 'Ana Sayfa';
 
   @override
   String get navScan => 'Tara';
@@ -371,11 +371,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String homeGreeting(Object name) {
-    return 'Hi $name 👋';
+    return 'Merhaba $name 👋';
   }
 
   @override
-  String get homeGreetingFallback => 'Hi 👋';
+  String get homeGreetingFallback => 'Merhaba 👋';
 
   @override
   String get homeReadySubtitle => 'Odanı yeniden tasarlamaya hazır mısın?';
@@ -424,15 +424,13 @@ class AppLocalizationsTr extends AppLocalizations {
       'Mekanını yakala, AI sana uygun mobilyaları önersin.';
 
   @override
-  String get scanPhotoDescription =>
-      'Odanı doğal ışıkta net şekilde kadraja al.';
+  String get scanPhotoDescription => 'Odanı net şekilde kadraja al.';
 
   @override
-  String get scanAnalysisDescription =>
-      'VisionSpace oda stilini ve yerleşimini okur.';
+  String get scanAnalysisDescription => 'AI stil ve düzeni analiz eder.';
 
   @override
-  String get scanIdeasDescription => 'Mobilya ve dekor önerilerini anında gör.';
+  String get scanIdeasDescription => 'Mobilya önerilerini gör.';
 
   @override
   String get aiRoomScan => 'AI ODA TARAMASI';
@@ -545,4 +543,19 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get scanTipsBody =>
       'Doğru AI önerileri için odanın iyi aydınlatılmış ve düzenli olduğundan emin ol.';
+
+  @override
+  String get scanTipNaturalLight => 'Doğal ışık kullan.';
+
+  @override
+  String get scanTipTidyRoom => 'Odayı düzenli tut.';
+
+  @override
+  String get scanTipWholeRoom => 'Tüm odayı kadraja al.';
+
+  @override
+  String get scanTipAvoidBlur => 'Bulanık fotoğraflardan kaçın.';
+
+  @override
+  String get scanTipCornerPhoto => 'Mümkünse köşeden fotoğraf çek.';
 }

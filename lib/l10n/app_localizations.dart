@@ -833,19 +833,19 @@ abstract class AppLocalizations {
   /// No description provided for @scanPhotoDescription.
   ///
   /// In en, this message translates to:
-  /// **'Frame your room clearly with natural lighting.'**
+  /// **'Frame your room clearly.'**
   String get scanPhotoDescription;
 
   /// No description provided for @scanAnalysisDescription.
   ///
   /// In en, this message translates to:
-  /// **'VisionSpace reads the room style and layout.'**
+  /// **'AI analyzes style and layout.'**
   String get scanAnalysisDescription;
 
   /// No description provided for @scanIdeasDescription.
   ///
   /// In en, this message translates to:
-  /// **'Review furniture and decor suggestions instantly.'**
+  /// **'See furniture suggestions.'**
   String get scanIdeasDescription;
 
   /// No description provided for @aiRoomScan.
@@ -929,7 +929,7 @@ abstract class AppLocalizations {
   /// No description provided for @emailNotConnected.
   ///
   /// In en, this message translates to:
-  /// **'No e-mail connected'**
+  /// **'Email not connected'**
   String get emailNotConnected;
 
   /// No description provided for @guestUser.
@@ -1051,6 +1051,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Make sure the room is well-lit and tidy for accurate AI suggestions.'**
   String get scanTipsBody;
+
+  /// No description provided for @scanTipNaturalLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Use natural light.'**
+  String get scanTipNaturalLight;
+
+  /// No description provided for @scanTipTidyRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the room tidy.'**
+  String get scanTipTidyRoom;
+
+  /// No description provided for @scanTipWholeRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture the whole room.'**
+  String get scanTipWholeRoom;
+
+  /// No description provided for @scanTipAvoidBlur.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid blurry photos.'**
+  String get scanTipAvoidBlur;
+
+  /// No description provided for @scanTipCornerPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take the photo from a corner if possible.'**
+  String get scanTipCornerPhoto;
 }
 
 class _AppLocalizationsDelegate

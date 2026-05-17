@@ -426,16 +426,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Capture your space and let AI suggest furniture that fits.';
 
   @override
-  String get scanPhotoDescription =>
-      'Frame your room clearly with natural lighting.';
+  String get scanPhotoDescription => 'Frame your room clearly.';
 
   @override
-  String get scanAnalysisDescription =>
-      'VisionSpace reads the room style and layout.';
+  String get scanAnalysisDescription => 'AI analyzes style and layout.';
 
   @override
-  String get scanIdeasDescription =>
-      'Review furniture and decor suggestions instantly.';
+  String get scanIdeasDescription => 'See furniture suggestions.';
 
   @override
   String get aiRoomScan => 'AI ROOM SCAN';
@@ -480,7 +477,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get personalInformation => 'Personal Information';
 
   @override
-  String get emailNotConnected => 'No e-mail connected';
+  String get emailNotConnected => 'Email not connected';
 
   @override
   String get guestUser => 'Guest User';
@@ -550,4 +547,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get scanTipsBody =>
       'Make sure the room is well-lit and tidy for accurate AI suggestions.';
+
+  @override
+  String get scanTipNaturalLight => 'Use natural light.';
+
+  @override
+  String get scanTipTidyRoom => 'Keep the room tidy.';
+
+  @override
+  String get scanTipWholeRoom => 'Capture the whole room.';
+
+  @override
+  String get scanTipAvoidBlur => 'Avoid blurry photos.';
+
+  @override
+  String get scanTipCornerPhoto => 'Take the photo from a corner if possible.';
 }

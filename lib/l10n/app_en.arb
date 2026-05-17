@@ -196,9 +196,9 @@
   "getIdeas": "Get Ideas",
   "scanYourRoom": "Scan Your Room",
   "scanPremiumSubtitle": "Capture your space and let AI suggest furniture that fits.",
-  "scanPhotoDescription": "Frame your room clearly with natural lighting.",
-  "scanAnalysisDescription": "VisionSpace reads the room style and layout.",
-  "scanIdeasDescription": "Review furniture and decor suggestions instantly.",
+  "scanPhotoDescription": "Frame your room clearly.",
+  "scanAnalysisDescription": "AI analyzes style and layout.",
+  "scanIdeasDescription": "See furniture suggestions.",
   "aiRoomScan": "AI ROOM SCAN",
   "aiRoomScanBody": "Take a photo of your room and get AI-powered furniture ideas.",
   "aiSuggestions": "AI Suggestions",
@@ -212,7 +212,7 @@
   "updates": "Updates",
   "editProfile": "Edit Profile",
   "personalInformation": "Personal Information",
-  "emailNotConnected": "No e-mail connected",
+  "emailNotConnected": "Email not connected",
   "guestUser": "Guest User",
   "notSet": "Not set",
   "support": "Support",
@@ -232,5 +232,10 @@
   "justNow": "Just now",
   "bestResultsNaturalLight": "Best results in natural light",
   "tipsForBestResults": "Tips for best results",
-  "scanTipsBody": "Make sure the room is well-lit and tidy for accurate AI suggestions."
+  "scanTipsBody": "Make sure the room is well-lit and tidy for accurate AI suggestions.",
+  "scanTipNaturalLight": "Use natural light.",
+  "scanTipTidyRoom": "Keep the room tidy.",
+  "scanTipWholeRoom": "Capture the whole room.",
+  "scanTipAvoidBlur": "Avoid blurry photos.",
+  "scanTipCornerPhoto": "Take the photo from a corner if possible."
 }

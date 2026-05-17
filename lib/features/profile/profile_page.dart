@@ -194,9 +194,6 @@ class _ProfilePageState extends State<ProfilePage> {
     return _ProfileSummary(
       displayName: displayName,
       email: email ?? AppLocalizations.of(context)!.emailNotConnected,
-      username: emailUsername != null && emailUsername.isNotEmpty
-          ? '@$emailUsername'
-          : '@guest',
     );
   }
 
@@ -284,17 +281,6 @@ class _ProfilePageState extends State<ProfilePage> {
                         fontSize: 14,
                         color: AppColors.muted,
                         fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      summary.username,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.sage,
-                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ],
@@ -545,13 +531,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _authButton(AppLocalizations l10n, User? user) {
     if (user == null) {
-      return FilledButton.icon(
+      return OutlinedButton.icon(
         onPressed: _signInWithGoogle,
         icon: const _GoogleMark(),
         label: Text(l10n.profileSignInGoogle),
-        style: FilledButton.styleFrom(
-          backgroundColor: AppColors.ink,
-          foregroundColor: Colors.white,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: AppColors.ink,
+          side: const BorderSide(color: AppColors.border),
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
@@ -684,15 +671,10 @@ class _InfoRow extends StatelessWidget {
 }
 
 class _ProfileSummary {
-  const _ProfileSummary({
-    required this.displayName,
-    required this.email,
-    required this.username,
-  });
+  const _ProfileSummary({required this.displayName, required this.email});
 
   final String displayName;
   final String email;
-  final String username;
 }
 
 class _GoogleMark extends StatelessWidget {
@@ -708,13 +690,51 @@ class _GoogleMark extends StatelessWidget {
         color: Colors.white,
         shape: BoxShape.circle,
       ),
-      child: const Text(
-        'G',
-        style: TextStyle(
-          color: AppColors.ink,
-          fontWeight: FontWeight.w900,
-          fontSize: 14,
-        ),
+      child: const Stack(
+        alignment: Alignment.center,
+        children: [
+          Text(
+            'G',
+            style: TextStyle(
+              color: Color(0xFF4285F4),
+              fontWeight: FontWeight.w900,
+              fontSize: 17,
+            ),
+          ),
+          Positioned(
+            right: 2,
+            bottom: 2,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Color(0xFF34A853),
+                shape: BoxShape.circle,
+              ),
+              child: SizedBox(width: 5, height: 5),
+            ),
+          ),
+          Positioned(
+            left: 2,
+            top: 2,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Color(0xFFEA4335),
+                shape: BoxShape.circle,
+              ),
+              child: SizedBox(width: 5, height: 5),
+            ),
+          ),
+          Positioned(
+            right: 2,
+            top: 2,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Color(0xFFFBBC05),
+                shape: BoxShape.circle,
+              ),
+              child: SizedBox(width: 5, height: 5),
+            ),
+          ),
+        ],
       ),
     );
   }

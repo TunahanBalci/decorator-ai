@@ -115,16 +115,16 @@ class _AppShellState extends State<AppShell> {
         children: [
           IndexedStack(index: _index, children: pages),
           Positioned(
-            left: 22,
-            right: 22,
-            bottom: 18,
+            left: 18,
+            right: 18,
+            bottom: 16,
             child: SafeArea(
               child: Container(
-                height: 66,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                height: 74,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 decoration: BoxDecoration(
                   color: AppColors.surface.withValues(alpha: 0.96),
-                  borderRadius: BorderRadius.circular(28),
+                  borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.ink.withValues(alpha: 0.10),
@@ -192,33 +192,37 @@ class _NavItem extends StatelessWidget {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          height: 46,
+          height: 58,
           decoration: BoxDecoration(
-            color: selected ? AppColors.sage : Colors.transparent,
+            color: selected
+                ? AppColors.sage
+                : AppColors.sage.withValues(alpha: 0.00),
             borderRadius: BorderRadius.circular(22),
           ),
-          child: Row(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 icon,
-                size: 22,
+                size: 21,
                 color: selected ? Colors.white : AppColors.muted,
               ),
-              if (selected) ...[
-                const SizedBox(width: 6),
-                Flexible(
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
                   child: Text(
                     label,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: selected ? Colors.white : AppColors.muted,
+                      fontSize: 11.5,
+                      fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
                     ),
                   ),
                 ),
-              ],
+              ),
             ],
           ),
         ),
