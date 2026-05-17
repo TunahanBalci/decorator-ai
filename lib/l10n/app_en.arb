@@ -1,0 +1,182 @@
+{
+  "@@locale": "en",
+  "appTitle": "Decorator AI",
+  "@appTitle": {
+    "description": "Application title used by the operating system and app shell."
+  },
+  "appBrand": "Decorator AI",
+  "@appBrand": {
+    "description": "Visible product brand wordmark."
+  },
+  "welcomeHeadline": "Scan your real space,\ndesign with AI,\nbuy what you love.",
+  "@welcomeHeadline": {
+    "description": "Main welcome screen headline."
+  },
+  "welcomeSubtitle": "A smart interior app that analyzes your home, office, or workplace and turns products into tappable shopping points.",
+  "welcomeInsight": "AI design suggestions and shopping matches are ready.",
+  "welcomeStartScan": "Start Scanning the Space",
+  "welcomeExploreExamples": "Explore Example Designs",
+  "onboardingStep": "{current} of {total}",
+  "@onboardingStep": {
+    "description": "Progress label for onboarding question pages.",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingOptionalSubtitle": "Optional. Share what you want and skip the rest.",
+  "onboardingSkip": "Skip",
+  "onboardingNext": "Next",
+  "onboardingYes": "Yes",
+  "onboardingNo": "No",
+  "onboardingScratchQuestion": "Are you decorating your home from scratch?",
+  "onboardingLocationQuestion": "Where is your space located?",
+  "onboardingLocationSubtitle": "Allow location to start near you, then tap the map to select your area.",
+  "onboardingUseCurrentLocation": "Use my location",
+  "onboardingSelectMapCenter": "Select map center",
+  "onboardingLocationMapHint": "Tap the map to select your area.",
+  "onboardingLocationSelected": "Selected: {latitude}, {longitude}",
+  "@onboardingLocationSelected": {
+    "description": "Confirmation text after a map coordinate is selected.",
+    "placeholders": {
+      "latitude": {},
+      "longitude": {}
+    }
+  },
+  "onboardingLocationServiceDisabled": "Location services are off. You can still tap the map.",
+  "onboardingLocationPermissionDenied": "Location permission was denied. You can still tap the map.",
+  "onboardingLocationPermissionDeniedForever": "Location permission is blocked. You can still tap the map.",
+  "onboardingLocationUnavailable": "Current location is unavailable. You can still tap the map.",
+  "onboardingCountryLabel": "Country",
+  "onboardingCountryHint": "Türkiye, France, United States...",
+  "onboardingAreaLabel": "Area",
+  "onboardingAreaHint": "Gölbaşı, Le Marais, Manhattan...",
+  "onboardingLocationInvalid": "Select country, city, and area from the list.",
+  "onboardingCityQuestion": "Which city are you located in?",
+  "onboardingCitySubtitle": "Start typing and choose a city from the list.",
+  "onboardingCityLabel": "City",
+  "onboardingCityHint": "Istanbul, London, New York...",
+  "onboardingCityInvalid": "Choose a city from the list.",
+  "onboardingAgeQuestion": "How old are you?",
+  "onboardingAgeLabel": "Age",
+  "onboardingAgeHint": "32",
+  "onboardingAgeInvalid": "Enter an age between 16 and 120.",
+  "onboardingLivingQuestion": "Are you living alone or with your family?",
+  "onboardingLivingAlone": "Living alone",
+  "onboardingLivingFamily": "With my family",
+  "navHome": "Home",
+  "navScan": "Scan",
+  "navSaved": "Favorites",
+  "navProfile": "Profile",
+  "savedTitle": "Favorites",
+  "savedSubtitle": "Furniture you favorite will be collected here.",
+  "profileTitle": "Profile",
+  "profileSubtitle": "Account, address, and preference settings will connect to the backend.",
+  "homeSubtitle": "AI-powered space design",
+  "homeNewScanBadge": "New scan",
+  "homeHeroTitle": "Scan your space,\nwe will create your AI design.",
+  "homeHeroBody": "Room size, light, style, and product detection will connect to this flow through the backend.",
+  "homeSuggestionsTitle": "AI Design Suggestions",
+  "designMatchedProducts": "{spaceType} • {style} • {count, plural, =0{no products matched} =1{1 product matched} other{{count} products matched}}",
+  "@designMatchedProducts": {
+    "description": "Design metadata shown under a design title.",
+    "placeholders": {
+      "spaceType": {},
+      "style": {},
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "designClickableProducts": "Tappable Products",
+  "productMatchScore": "{score}% match",
+  "@productMatchScore": {
+    "description": "Similarity score for a matched product.",
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "scanTitle": "Space Scan",
+  "scanSubtitle": "Open the camera and scan the space to create an AI design.",
+  "scanInstruction": "When you press the button, the camera opens. After the photo is taken, the AI design flow starts.",
+  "scanCreateDesign": "Create AI Design",
+  "cameraNotFound": "No camera found.",
+  "cameraCouldNotStart": "Camera could not be started.",
+  "cameraCaptureFailed": "Scan could not be captured. Try again.",
+  "cameraAnalyzing": "AI is analyzing the space...",
+  "cameraCaptureHint": "Frame the room, then press the scan button.",
+  "cameraPermissionDenied": "Camera permission was not granted. Allow camera permission from the browser to scan.",
+  "cameraCouldNotOpen": "Camera could not be opened: {details}",
+  "@cameraCouldNotOpen": {
+    "description": "Camera error message with platform-provided details.",
+    "placeholders": {
+      "details": {}
+    }
+  },
+  "cameraScanTitle": "Scan the Space",
+  "cameraOverlayHint": "Keep the walls, floor, light, and furniture visible so they can be detected.",
+  "productSimilarWithAi": "Find Similar Products with AI",
+  "productPurchaseOptions": "Purchase Options",
+  "productDescriptionSofa": "Modern fabric three-seat sofa",
+  "productDescriptionGeneric": "A similar product matched by AI according to the item in the design.",
+  "productRatingSummary": "{rating} ({reviewCount})",
+  "@productRatingSummary": {
+    "description": "Compact product rating and review count.",
+    "placeholders": {
+      "rating": {},
+      "reviewCount": {
+        "type": "int"
+      }
+    }
+  },
+  "productDetailTitle": "Product Detail",
+  "productGoToProduct": "Go to Product",
+  "productStoreOpenFailed": "{storeName} link could not be opened.",
+  "@productStoreOpenFailed": {
+    "description": "Shown when an external store URL cannot be opened.",
+    "placeholders": {
+      "storeName": {}
+    }
+  },
+  "productSecurityNote": "You will go to the store's official page through a secure redirect.",
+  "profileSaved": "Profile saved successfully.",
+  "profileGoogleSignInFailed": "Failed to sign in with Google: {error}",
+  "@profileGoogleSignInFailed": {
+    "description": "Error message when Google Sign-In fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "profileDefaultUser": "User",
+  "profileNameLabel": "Name",
+  "profileSurnameLabel": "Surname",
+  "profileNameRequired": "Name is required",
+  "profileSurnameRequired": "Surname is required",
+  "profileEditCancel": "Cancel",
+  "profileEditConfirm": "Confirm",
+  "profileSignInGoogle": "Sign in with Google",
+  "profileSignOut": "Sign Out",
+  "profileBirthdayLabel": "Birthday",
+  "profileBirthdayNotSet": "Birthday not set",
+  "profileSettingsTitle": "Settings",
+  "profileSettingAuthReminders": "Authentication Reminders",
+  "profileSettingAiUpdates": "Design Suggestion Status Updates",
+  "authReminderTitle": "Sign in to save your progress!",
+  "authReminderBody": "Don't lose your AI designs. Sign in with Google now.",
+  "authReminderRecurringTitle": "Your spaces are waiting",
+  "authReminderRecurringBody": "Sign in to sync your AI designs across devices.",
+  "profileSettingLanguage": "Language",
+  "languageEnglish": "English",
+  "languageTurkish": "Türkçe",
+  "notificationsTitle": "Notifications",
+  "noNotificationsMessage": "There are no notifications",
+  "noFavoritesMessage": "No favorite furniture yet. Tap a heart on the home screen to add one."
+}

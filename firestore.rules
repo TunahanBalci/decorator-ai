@@ -1,0 +1,35 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isNonEmptyString(value) {
+      return value is string && value.size() > 0;
+    }
+
+    function hasOnlyKeys(keys) {
+      return request.resource.data.keys().hasOnly(keys);
+    }
+
+    match /designProjects/{projectId} {
+      allow read: if resource.data.isPublished == true;
+      allow write: if false;
+
+      match /products/{productId} {
+        allow read: if get(/databases/$(database)/documents/designProjects/$(projectId)).data.isPublished == true;
+        allow write: if false;
+      }
+    }
+
+    match /scans/{scanId} {
+      allow create: if hasOnlyKeys(['localScanId', 'status', 'createdAt'])
+        && isNonEmptyString(request.resource.data.localScanId)
+        && request.resource.data.status == 'queued'
+        && request.resource.data.createdAt == request.time;
+      allow read, update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

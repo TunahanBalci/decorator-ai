@@ -1,0 +1,142 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  // Background message handling infrastructure.
+  // When a data-only payload is received, we can show a local notification here if toggled on.
+}
+
+class NotificationService {
+  static final NotificationService instance = NotificationService._();
+  NotificationService._();
+
+  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  
+  static const String _prefLocalNotifications = 'pref_local_notifications';
+  static const String _prefRemoteNotifications = 'pref_remote_notifications';
+
+  Future<void> initialize() async {
+    tz.initializeTimeZones();
+
+    const initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/launcher_icon');
+    const initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+
+    await _localNotifications.initialize(
+      settings: initializationSettings,
+    );
+
+    // Request permissions for Android 13+ and iOS
+    await FirebaseMessaging.instance.requestPermission();
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+
+    // Setup FCM foreground listener
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      _showRemoteNotification(message);
+    });
+  }
+
+  Future<bool> get isLocalNotificationsEnabled async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_prefLocalNotifications) ?? true;
+  }
+
+  Future<void> setLocalNotificationsEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefLocalNotifications, enabled);
+    if (!enabled) {
+      await cancelAllLocalNotifications();
+    }
+  }
+
+  Future<bool> get isRemoteNotificationsEnabled async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_prefRemoteNotifications) ?? true;
+  }
+
+  Future<void> setRemoteNotificationsEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefRemoteNotifications, enabled);
+  }
+
+  Future<void> scheduleOnboardingReminders(String title, String body, String recurringTitle, String recurringBody) async {
+    final enabled = await isLocalNotificationsEnabled;
+    if (!enabled) return;
+
+    // 1. Shortly after onboarding (e.g., 2 minutes)
+    await _localNotifications.zonedSchedule(
+      id: 1,
+      title: title,
+      body: body,
+      scheduledDate: tz.TZDateTime.now(tz.local).add(const Duration(minutes: 2)),
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'auth_reminders',
+          'Authentication Reminders',
+          channelDescription: 'Reminders to sign in or create an account',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+
+    // 2. Every 3 days reminder
+    // Schedule the next 10 occurrences manually since flutter_local_notifications lacks a 3-day interval.
+    final now = tz.TZDateTime.now(tz.local);
+    for (int i = 1; i <= 10; i++) {
+      await _localNotifications.zonedSchedule(
+        id: 10 + i,
+        title: recurringTitle,
+        body: recurringBody,
+        scheduledDate: now.add(Duration(days: 3 * i)),
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'auth_reminders',
+            'Authentication Reminders',
+            channelDescription: 'Reminders to sign in or create an account',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+    }
+  }
+
+  Future<void> cancelAllLocalNotifications() async {
+    await _localNotifications.cancelAll();
+  }
+
+  Future<void> _showRemoteNotification(RemoteMessage message) async {
+    final enabled = await isRemoteNotificationsEnabled;
+    if (!enabled) return;
+
+    final notification = message.notification;
+    if (notification != null) {
+      await _localNotifications.show(
+        id: notification.hashCode,
+        title: notification.title,
+        body: notification.body,
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'ai_updates',
+            'Design AI Updates',
+            channelDescription: 'Notifications for when your AI designs are ready',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+        ),
+      );
+    }
+  }
+}

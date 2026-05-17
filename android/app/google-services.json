@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "883763781497",
+    "project_id": "decorator-ai-4485a",
+    "storage_bucket": "decorator-ai-4485a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:883763781497:android:4d501cc31ff6b7072999a8",
+        "android_client_info": {
+          "package_name": "com.example.decorator_ai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "883763781497-r3lo1kk6lhs4fe15s0ovn5lup4dj89i5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDAnzd-C4xRPiduHAlk-bAL7bTPCIm4K6U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "883763781497-r3lo1kk6lhs4fe15s0ovn5lup4dj89i5.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "883763781497-hdjc0ogrs98eaj0vbqivg1rists7otsv.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.visionspace"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

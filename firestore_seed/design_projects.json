@@ -1,0 +1,68 @@
+{
+  "designProjects": {
+    "room-001": {
+      "title": "Akdeniz salon dönüşümü",
+      "spaceType": "Ev",
+      "style": "Warm minimal",
+      "imageUrl": "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=80",
+      "isPublished": true,
+      "sortOrder": 1,
+      "products": {
+        "p-01": {
+          "name": "Keten üçlü koltuk",
+          "brand": "Benzer ürün",
+          "price": "24.999 TL",
+          "matchScore": 94,
+          "left": 0.3,
+          "top": 0.6,
+          "imageUrl": "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80",
+          "buyUrl": "https://www.ikea.com/tr/tr/",
+          "sortOrder": 1
+        },
+        "p-02": {
+          "name": "Traverten sehpa",
+          "brand": "Benzer ürün",
+          "price": "7.490 TL",
+          "matchScore": 89,
+          "left": 0.58,
+          "top": 0.72,
+          "imageUrl": "https://images.unsplash.com/photo-1532372320978-9d6e67a5ef0c?auto=format&fit=crop&w=800&q=80",
+          "buyUrl": "https://www.vivense.com/",
+          "sortOrder": 2
+        },
+        "p-03": {
+          "name": "Kavisli lambader",
+          "brand": "Benzer ürün",
+          "price": "3.250 TL",
+          "matchScore": 86,
+          "left": 0.76,
+          "top": 0.42,
+          "imageUrl": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=80",
+          "buyUrl": "https://www.trendyol.com/",
+          "sortOrder": 3
+        }
+      }
+    },
+    "room-002": {
+      "title": "Odaklı çalışma alanı",
+      "spaceType": "Ofis",
+      "style": "Soft industrial",
+      "imageUrl": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80",
+      "isPublished": true,
+      "sortOrder": 2,
+      "products": {
+        "p-04": {
+          "name": "Ahşap çalışma masası",
+          "brand": "Benzer ürün",
+          "price": "12.750 TL",
+          "matchScore": 91,
+          "left": 0.48,
+          "top": 0.68,
+          "imageUrl": "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=800&q=80",
+          "buyUrl": "https://www.hepsiburada.com/",
+          "sortOrder": 1
+        }
+      }
+    }
+  }
+}
