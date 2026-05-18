@@ -12,8 +12,8 @@ class VivenseSpider(CrawlSpider):
 
     # Elenmesini istediğin ana kategori başlıkları
     TARGET_CATEGORIES = [
-            'yatak odası takımı', 'baza', 'gardırop', 'komodin', 'yatak başlığı', 'yatak', 
-            'karyola', 'gardırop', 'mutfak masası', 'mutfak-masa-takımı', 'Mutfak Masası',
+            'baza', 'gardırop', 'komodin', 'yatak başlığı', 'yatak', 
+            'karyola', 'gardırop', 'mutfak masası', 'Mutfak Masası',
             'Mutfak sandalyeleri', 'Çok amaçlı mutfak dolabı', 'Hazır mutfak dolabı'
     ]
     
