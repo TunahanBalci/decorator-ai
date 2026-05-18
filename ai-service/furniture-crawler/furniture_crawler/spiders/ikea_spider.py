@@ -6,6 +6,9 @@ from furniture_crawler.extractors.image_extractor import extract_image_urls
 
 class IkeaSpider(CrawlSpider):
     name = "ikea"
+    custom_settings = {
+        'FEEDS': {'ikea_urunleri.json': {'format': 'json', 'overwrite': True}}
+    }
     allowed_domains = ["ikea.com.tr"]
     
     # 1. DÜZELTME: Vivense kalıntısı silindi, sadece IKEA kategorileri bırakıldı.

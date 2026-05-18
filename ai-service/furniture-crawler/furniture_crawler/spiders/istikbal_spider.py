@@ -6,6 +6,9 @@ from furniture_crawler.extractors.image_extractor import extract_image_urls
 
 class IstikbalSpider(CrawlSpider):
     name = "istikbal"
+    custom_settings = {
+        'FEEDS': {'istikbal_urunleri.json': {'format': 'json', 'overwrite': True}}
+    }
     allowed_domains = ["istikbal.com.tr"]
     
     # İstikbal ana mobilya kategorileri

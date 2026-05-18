@@ -7,6 +7,9 @@ from furniture_crawler.extractors.image_extractor import extract_image_urls
 class VivenseSpider(CrawlSpider):
     name = "vivense"
     allowed_domains = ["vivense.com"]
+    custom_settings = {
+        'FEEDS': {'vivense_urunleri.json': {'format': 'json', 'overwrite': True}}
+    }
     start_urls = ["https://www.vivense.com/sitemap.html"]
    
 
