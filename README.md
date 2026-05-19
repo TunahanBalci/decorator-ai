@@ -451,6 +451,14 @@ GENERATED_IMAGE_DIR=/data/images/generated
 GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcp-service-account.json
 ```
 
+Varsayılan Docker kurulumunda `/data/images`, host tarafındaki `ai-service/data/images` dizinine bağlanır. Sunucuya taşırken bu dizinleri container başlamadan önce oluşturun ve container'ın yazabildiğinden emin olun:
+
+```bash
+mkdir -p ai-service/data/images/products ai-service/data/images/rooms ai-service/data/images/generated
+```
+
+Eğer projeyi farklı bir host dizinine koyduysanız sorun değildir; önemli olan compose bind mount'unun gerçek host yolunu göstermesi ve `.env` içindeki dört image path değerinin aynı container kökü (`/data/images`) altında kalmasıdır.
+
 Service account key dosyasını yerleştirin:
 
 ```bash

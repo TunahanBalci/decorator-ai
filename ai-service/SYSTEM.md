@@ -437,6 +437,14 @@ Clients poll `GET /design-jobs/{job_id}` until `status` becomes `"completed"` or
 | `./secrets` | `/secrets:ro` | GCP service account key |
 | `../data` | `/data/pipeline:ro` | Preprocessor output (enriched_products.jsonl) |
 
+The API and worker create `LOCAL_IMAGE_ROOT`, `ROOM_UPLOAD_DIR`, `PRODUCT_IMAGE_DIR`, and `GENERATED_IMAGE_DIR` on startup. In production, the host path mounted to `/data/images` must still exist and be writable by the container user before uploads are accepted. For the default bind mount, prepare it with:
+
+```bash
+mkdir -p ai-service/data/images/products ai-service/data/images/rooms ai-service/data/images/generated
+```
+
+If the service is deployed from a different host directory, either keep the same container paths in `.env` or update all four image directory variables together. API responses must remain relative to `LOCAL_IMAGE_ROOT`.
+
 ### Portability Notes
 
 The system is designed to move between local dev and production servers:
