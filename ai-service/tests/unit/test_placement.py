@@ -102,6 +102,98 @@ def test_plan_placements_tolerates_settings_without_debug_flag(tmp_path: Path) -
     assert result["placement_debug"].get("debug_image_path") is None
 
 
+def test_attach_placements_drops_products_without_polygons() -> None:
+    from app.workflow.nodes.plan_placements import _attach_placements_to_products
+
+    selected = [
+        {"product_id": "placed", "role": "coffee_table", "design_index": 0},
+        {"product_id": "missing", "role": "floor_lamp", "design_index": 0},
+    ]
+    placement_map = {
+        "placed": {
+            "product_id": "placed",
+            "target_polygon": [
+                [0.2, 0.6],
+                [0.4, 0.6],
+                [0.4, 0.8],
+                [0.2, 0.8],
+            ],
+        }
+    }
+
+    placed_products, dropped_products = _attach_placements_to_products(
+        selected,
+        placement_map,
+    )
+
+    assert placed_products == [
+        {
+            "product_id": "placed",
+            "role": "coffee_table",
+            "design_index": 0,
+            "polygon": [
+                [0.2, 0.6],
+                [0.4, 0.6],
+                [0.4, 0.8],
+                [0.2, 0.8],
+            ],
+        }
+    ]
+    assert dropped_products == [
+        {"product_id": "missing", "role": "floor_lamp", "design_index": 0}
+    ]
+
+
+def test_plan_placements_drops_products_without_valid_floor_placement(tmp_path: Path) -> None:
+    from app.workflow.nodes.plan_placements import _validated_floor_placements
+
+    settings = SimpleNamespace(
+        local_image_root=tmp_path / "images",
+        room_upload_dir=tmp_path / "images" / "rooms",
+        product_image_dir=tmp_path / "images" / "products",
+        generated_image_dir=tmp_path / "images" / "generated",
+    )
+    state = {
+        "job_id": "blocked-floor",
+        "room_image_path": "",
+        "selected_products": [
+            {"product_id": "p1", "role": "coffee_table", "design_index": 0}
+        ],
+        "room_analysis": {
+            "available_placement_zones": [
+                {
+                    "label": "floor",
+                    "polygon": [
+                        [0.0, 0.55],
+                        [1.0, 0.55],
+                        [1.0, 1.0],
+                        [0.0, 1.0],
+                    ],
+                }
+            ],
+            "existing_furniture": [
+                {
+                    "label": "blocked_floor",
+                    "polygon": [
+                        [0.0, 0.45],
+                        [1.0, 0.45],
+                        [1.0, 1.0],
+                        [0.0, 1.0],
+                    ],
+                }
+            ],
+        },
+    }
+
+    result = _validated_floor_placements(state, settings)
+
+    assert result["placement_plan"]["placements"] == []
+    assert result["selected_products"] == []
+    assert result["placement_debug"]["dropped_products"] == [
+        {"product_id": "p1", "role": "coffee_table", "design_index": 0}
+    ]
+
+
 def test_debug_image_and_placeholder_composite_are_written_for_sample_room(tmp_path: Path) -> None:
     settings = Settings(
         local_image_root=tmp_path / "images",

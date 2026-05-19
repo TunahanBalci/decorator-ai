@@ -103,11 +103,10 @@ def _layout_planner_placements(state: DesignWorkflowState, settings) -> dict | N
         placements.append(placement)
         placement_map[str(pp.product_id)] = placement
 
-    # Assign polygons to selected products.
-    for product in selected:
-        pid = str(product.get("product_id", ""))
-        if pid in placement_map:
-            product["polygon"] = placement_map[pid]["target_polygon"]
+    placed_products, dropped_products = _attach_placements_to_products(
+        selected,
+        placement_map,
+    )
 
     debug = {
         "coordinate_system": "normalized_0_1",
@@ -121,9 +120,12 @@ def _layout_planner_placements(state: DesignWorkflowState, settings) -> dict | N
         "variation_name": plan.variation_name,
         "planner": "layout_planner_v1",
     }
+    if dropped_products:
+        debug["dropped_products"] = dropped_products
 
     # Debug output.
-    if settings.debug_placement and resolved_room is not None:
+    debug_placement_enabled = bool(getattr(settings, "debug_placement", False))
+    if debug_placement_enabled and resolved_room is not None:
         debug_image_path = f"generated/debug/{state['job_id']}_placement.png"
         output_path = storage.resolve_generated_image(debug_image_path)
         draw_placement_debug_image(resolved_room, output_path, debug)
@@ -134,14 +136,15 @@ def _layout_planner_placements(state: DesignWorkflowState, settings) -> dict | N
         job_id=state.get("job_id"),
         layout_score=plan.layout_score,
         variation=plan.variation_name,
-        placed=len(plan.placements),
+        placed=len(placed_products),
         rejected=len(plan.rejected),
+        dropped=len(dropped_products),
     )
 
     return {
         "placement_plan": {"placements": placements, "debug": debug},
         "placement_debug": debug,
-        "selected_products": selected,
+        "selected_products": placed_products,
     }
 
 
@@ -160,10 +163,12 @@ def _validated_floor_placements(state: DesignWorkflowState, settings) -> dict:
         room_analysis=state.get("room_analysis"),
     )
     placement_map = {str(placement["product_id"]): placement for placement in placements}
-    for product in selected:
-        placement = placement_map.get(str(product["product_id"]))
-        if placement:
-            product["polygon"] = placement["target_polygon"]
+    placed_products, dropped_products = _attach_placements_to_products(
+        selected,
+        placement_map,
+    )
+    if dropped_products:
+        debug["dropped_products"] = dropped_products
 
     debug_image_path = None
     debug_placement_enabled = bool(getattr(settings, "debug_placement", False))
@@ -180,14 +185,37 @@ def _validated_floor_placements(state: DesignWorkflowState, settings) -> dict:
         coordinate_system="normalized_0_1",
         accepted_count=len(debug["accepted"]),
         rejected_count=len(debug["rejected"]),
+        dropped_count=len(dropped_products),
         debug_image_path=debug_image_path,
     )
 
     return {
         "placement_plan": {"placements": placements, "debug": debug},
         "placement_debug": debug,
-        "selected_products": selected,
+        "selected_products": placed_products,
     }
+
+
+def _attach_placements_to_products(
+    selected: list[dict],
+    placement_map: dict[str, dict],
+) -> tuple[list[dict], list[dict]]:
+    placed_products = []
+    dropped_products = []
+    for product in selected:
+        placement = placement_map.get(str(product.get("product_id")))
+        if placement:
+            product["polygon"] = placement["target_polygon"]
+            placed_products.append(product)
+        else:
+            dropped_products.append(
+                {
+                    "product_id": product.get("product_id"),
+                    "role": product.get("role"),
+                    "design_index": product.get("design_index"),
+                }
+            )
+    return placed_products, dropped_products
 
 
 def _floor_polygon_from_analysis(
