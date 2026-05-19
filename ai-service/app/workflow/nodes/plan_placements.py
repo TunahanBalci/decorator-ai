@@ -5,10 +5,13 @@ Falls back to the original Sprint 1 ``build_floor_placements`` if the
 planner fails or produces no valid placements.
 """
 
+import json
 import structlog
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.ai.vertex_client import VertexAIClient, load_prompt
+from app.schemas.ai_outputs import PlacementPlan
 from app.storage.local_storage import LocalImageStorage
 from app.utils.placement import (
     build_floor_placements,
@@ -61,9 +64,7 @@ def plan_placements_node(db: Session):
 
 
 def _layout_planner_placements(state: DesignWorkflowState, settings) -> dict | None:
-    """Use the Sprint 4 LayoutPlanner for intelligent placement."""
-    from app.layout.planner import LayoutPlanner
-
+    """Use Gemini RAG 3.1 Pro for intelligent placement."""
     selected = state.get("selected_products", [])
     room_analysis = state.get("room_analysis", {})
     storage = LocalImageStorage(settings)
@@ -73,19 +74,40 @@ def _layout_planner_placements(state: DesignWorkflowState, settings) -> dict | N
 
     # Extract floor polygon from room analysis.
     floor_polygon = _floor_polygon_from_analysis(room_analysis, image_width, image_height)
-
-    planner = LayoutPlanner()
-    plans = planner.plan(
-        room_analysis=room_analysis,
-        products=selected,
-        floor_polygon=floor_polygon,
-        num_layouts=1,
+    
+    products_to_place = []
+    for p in selected:
+        product_minimal = {
+            "product_id": str(p.get("product_id")),
+            "role": p.get("role"),
+            "category": p.get("category"),
+            "dimensions": p.get("metadata", {}).get("dimensions", {})
+        }
+        products_to_place.append(product_minimal)
+        
+    client = VertexAIClient(settings)
+    prompt_template = load_prompt("placement_plan.md")
+    prompt = (
+        f"{prompt_template}\n\n"
+        f"Room analysis:\n{json.dumps(room_analysis, indent=2)}\n\n"
+        f"Products to place:\n{json.dumps(products_to_place, indent=2)}\n\n"
+        f"Floor polygon: {json.dumps(floor_polygon)}\n"
     )
 
-    if not plans or not plans[0].placements:
+    try:
+        plan = client.generate_json(
+            prompt=prompt,
+            response_schema=PlacementPlan,
+            images=[resolved_room] if resolved_room else None,
+            model_tier="pro" # Gemini 3.1 Pro for spatial reasoning
+        )
+    except Exception as exc:
+        logger.warning("gemini_placement_failed", error=str(exc))
         return None
 
-    plan = plans[0]
+    if not plan or not plan.placements:
+        return None
+
     placements = []
     placement_map = {}
 
@@ -94,11 +116,12 @@ def _layout_planner_placements(state: DesignWorkflowState, settings) -> dict | N
             "product_id": pp.product_id,
             "role": pp.role,
             "placement_type": "new",
-            "target_polygon": pp.polygon,
-            "depth_order": pp.render_order,
+            "target_polygon": pp.target_polygon,
+            "depth_order": pp.depth_order,
             "confidence": pp.confidence,
-            "notes": pp.placement_reason,
-            "zone_label": pp.zone_label,
+            "notes": pp.notes,
+            "scale": pp.scale,
+            "rotation": pp.rotation
         }
         placements.append(placement)
         placement_map[str(pp.product_id)] = placement
@@ -115,10 +138,8 @@ def _layout_planner_placements(state: DesignWorkflowState, settings) -> dict | N
         "floor_polygon": floor_polygon,
         "existing_furniture": [],
         "accepted": placements,
-        "rejected": [r for r in plan.rejected],
-        "layout_score": plan.layout_score,
-        "variation_name": plan.variation_name,
-        "planner": "layout_planner_v1",
+        "rejected": [],
+        "planner": "gemini_rag_v1",
     }
     if dropped_products:
         debug["dropped_products"] = dropped_products
@@ -206,6 +227,8 @@ def _attach_placements_to_products(
         placement = placement_map.get(str(product.get("product_id")))
         if placement:
             product["polygon"] = placement["target_polygon"]
+            product["scale"] = placement.get("scale", 1.0)
+            product["rotation"] = placement.get("rotation", 0.0)
             placed_products.append(product)
         else:
             dropped_products.append(

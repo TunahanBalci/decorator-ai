@@ -227,10 +227,13 @@ yalnızca `DEBUG_PLACEMENT=true` debug çıktısında görülebilir. Sprint 2 il
 perspektif farkındalıklı ölçekleme (düşük y = uzak = küçük,
 yüksek y = yakın = büyük), alt-orta bağlama noktası ve yumuşak gölge oluşturma ile
 geliştirilmiştir. Sprint 3 ile renderer mimarisi takılabilir (pluggable) hale getirilmiştir:
-`RENDER_METHOD` ayarı ile `overlay` (varsayılan, GPU gerektirmez), `mock_inpaint` (maske +
-prompt oluşturur, overlay ile render eder), `sdxl_inpaint` (gelecekte GPU ile) ve `external_ai`
-(Replicate, Stability API gibi harici servisler) desteklenir. GPU bağımlılıkları eksikse
-otomatik olarak overlay renderer'a düşer.
+`RENDER_METHOD` ayarı ile `gemini_image_edit` (varsayılan; `gemini-3-pro-image-preview`
+ile oda fotoğrafı + ürün referanslarını düzenler), `overlay` (GPU gerektirmez), `mock_inpaint`
+(maske + prompt oluşturur, overlay ile render eder), `sdxl_inpaint` (gelecekte GPU ile) ve
+`external_ai` (Replicate, Stability API gibi harici servisler) desteklenir. Gemini edit modu
+ürün görsellerindeki beyaz/stüdyo arka planını kaldırmayı, sahne perspektifine göre boyut/rotasyon
+uyarlamayı ve gölge/ışık bütünleştirmeyi modelden ister. `ENABLE_IMAGE_GENERATION=false` veya
+Gemini yapılandırması eksikse otomatik olarak overlay renderer'a düşer.
 
 Sprint 4 ile çoklu mobilya yerleşimi için akıllı düzen planlaması eklenmiştir.
 `app/layout/` paketi oda bölgeleme (`zones.py`), mobilya ilişki kuralları (`constraints.py`),
@@ -483,6 +486,7 @@ QDRANT_COLLECTION_PRODUCTS=furniture_products
 VERTEX_PROJECT_ID=your-gcp-project-id
 VERTEX_MODEL_ID=gemini-3-flash-preview
 VERTEX_PRO_MODEL_ID=gemini-3.1-pro-preview
+VERTEX_IMAGE_MODEL_ID=gemini-3-pro-image-preview
 VERTEX_LOCATION=global
 VERTEX_EMBEDDING_MODEL=text-embedding-005
 VERTEX_MULTIMODAL_MODEL=multimodalembedding@001

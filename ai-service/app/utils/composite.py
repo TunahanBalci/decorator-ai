@@ -156,6 +156,10 @@ def _render_furniture_with_perspective(
         min_scale=settings.perspective_min_scale,
         max_scale=settings.perspective_max_scale,
     )
+    
+    # Allow AI to adjust rotation and scale
+    rotation = float(product.get("rotation", 0.0))
+    scale *= float(product.get("scale", 1.0))
 
     target_w, target_h = compute_furniture_dimensions(
         scale,
@@ -166,6 +170,10 @@ def _render_furniture_with_perspective(
     furniture_resized = furniture.resize(
         (target_w, target_h), Image.Resampling.LANCZOS
     )
+    
+    if rotation != 0.0:
+        furniture_resized = furniture_resized.rotate(-rotation, expand=True, resample=Image.BICUBIC)
+        target_w, target_h = furniture_resized.size
 
     # ---- 2. Optional perspective skew -----------------------------------
     if settings.enable_perspective_skew:
@@ -270,18 +278,27 @@ def _prepare_product_cutout(image: Image.Image) -> Image.Image:
     if alpha.getextrema() != (255, 255):
         return rgba.copy()
 
-    background = _background_color_from_corners(rgba)
-    if background is None:
-        background = (255, 255, 255)
+    import cv2
+    import numpy as np
 
-    arr = np.array(rgba)
-    # Vectorized background removal for speed
-    diff = np.abs(arr[:, :, :3] - np.array(background))
-    # Using a higher tolerance since users reported white background remaining
-    mask = np.max(diff, axis=-1) <= 35
+    img_cv = np.array(rgba)
+    img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_RGBA2RGB)
     
-    arr[mask, 3] = 0
-    return Image.fromarray(arr, 'RGBA')
+    h, w = img_cv.shape[:2]
+    mask = np.zeros((h + 2, w + 2), np.uint8)
+    
+    # Use floodFill from corners to target outer background only
+    tol = (15, 15, 15)
+    corners = [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]
+    for pt in corners:
+        # Check if corner is near white/off-white before flood-filling
+        if min(img_rgb[pt[1], pt[0]]) > 220:
+            cv2.floodFill(img_rgb, mask, pt, (255, 255, 255), tol, tol, cv2.FLOODFILL_MASK_ONLY | (255 << 8))
+
+    background_mask = mask[1:-1, 1:-1] == 255
+    img_cv[background_mask, 3] = 0
+    
+    return Image.fromarray(img_cv, 'RGBA')
 
 
 def _background_color_from_corners(image: Image.Image) -> tuple[int, int, int] | None:

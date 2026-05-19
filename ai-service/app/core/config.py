@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     vertex_project_id: str | None = None
     vertex_model_id: str = "gemini-3-flash-preview"
     vertex_pro_model_id: str = "gemini-3.1-pro-preview"
+    vertex_image_model_id: str = "gemini-3-pro-image-preview"
     vertex_location: str = "global"
     vertex_embedding_model: str = "text-embedding-005"
     vertex_multimodal_model: str = "multimodalembedding@001"
@@ -65,11 +66,12 @@ class Settings(BaseSettings):
 
     # -- Sprint 3: Rendering architecture ---------------------------------
     # Supported render methods:
-    #   "overlay"       — Sprint 2 perspective PNG overlay (default, no GPU)
-    #   "mock_inpaint"  — simulates SDXL pipeline (mask + prompt), renders via overlay
-    #   "sdxl_inpaint"  — real SDXL + ControlNet (requires torch + diffusers + GPU)
-    #   "external_ai"   — external API service (Replicate, Stability, Vertex Imagen)
-    render_method: str = "overlay"
+    #   "overlay"           — Sprint 2 perspective PNG overlay fallback (no GPU)
+    #   "gemini_image_edit" — default Gemini image edit using room + product reference images
+    #   "mock_inpaint"      — simulates SDXL pipeline (mask + prompt), renders via overlay
+    #   "sdxl_inpaint"      — real SDXL + ControlNet (requires torch + diffusers + GPU)
+    #   "external_ai"       — external API service (Replicate, Stability, Vertex Imagen)
+    render_method: str = "gemini_image_edit"
 
     # Mask generation for inpainting
     mask_dilation_px: int = 10  # dilate mask edges for better blending

@@ -23,6 +23,7 @@ Edit `.env` and set your values:
 VERTEX_PROJECT_ID=your-gcp-project-id   # required
 VERTEX_MODEL_ID=gemini-3-flash-preview   # light tasks
 VERTEX_PRO_MODEL_ID=gemini-3.1-pro-preview  # heavy reasoning
+VERTEX_IMAGE_MODEL_ID=gemini-3-pro-image-preview  # final image edit renders
 VERTEX_MULTIMODAL_LOCATION=us-central1   # region for image embeddings
 PRODUCT_EMBEDDING_IMAGE_ROOT=/data/pipeline/output/images  # local product image root
 ```

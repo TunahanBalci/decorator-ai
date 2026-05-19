@@ -183,6 +183,8 @@ class ProductPlacement(BaseModel):
     depth_order: int = 0
     confidence: float
     notes: str | None = None
+    scale: float | None = 1.0
+    rotation: float | None = 0.0
 
 
 class PlacementPlan(BaseModel):

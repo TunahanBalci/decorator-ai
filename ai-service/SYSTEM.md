@@ -15,7 +15,7 @@ The AI Service is a **furniture recommendation backend**. A client uploads a roo
 5. Plans spatial placements (where each product goes in the room)
 6. Persists the final design and returns it via API
 
-The entire pipeline is orchestrated by a **LangGraph state machine**. Heavy reasoning uses **Vertex AI (gemini-3.1-pro-preview)**; lightweight tasks use **gemini-3-flash-preview**. Product search uses a **dual-vector architecture**: text embeddings from `text-embedding-005` and image embeddings from `multimodalembedding@001`, stored as named vectors in **Qdrant**.
+The entire pipeline is orchestrated by a **LangGraph state machine**. Heavy reasoning uses **Vertex AI (gemini-3.1-pro-preview)**; lightweight tasks use **gemini-3-flash-preview**; final AI image edits use **gemini-3-pro-image-preview** when enabled. Product search uses a **dual-vector architecture**: text embeddings from `text-embedding-005` and image embeddings from `multimodalembedding@001`, stored as named vectors in **Qdrant**.
 
 ---
 
@@ -87,7 +87,8 @@ ai-service/
 │   │   └── upload_service.py  # Delegates to LocalImageStorage
 │   ├── rendering/
 │   │   ├── base.py            # Sprint 3: FurnitureRenderer interface + RenderResult
-│   │   ├── overlay_renderer.py  # Default GPU-free overlay renderer
+│   │   ├── overlay_renderer.py  # GPU-free fallback renderer
+│   │   ├── gemini_image_renderer.py  # Gemini room + product reference image editor
 │   │   ├── mock_inpaint_renderer.py  # Simulates SDXL pipeline (mask + prompt)
 │   │   ├── external_renderer.py  # Sprint 5: cloud AI inpainting via providers
 │   │   ├── masks.py           # Inpainting mask generation
@@ -325,8 +326,8 @@ class DesignWorkflowState(TypedDict, total=False):
 | `create_design_strategies` | **Pro** | Generates concepts from room type, user preferences, available zones, and supported catalog categories; ignores visible furniture. |
 | `retrieve_candidates` | Text + Image embeddings | Catalog-only search. With `IGNORE_EXISTING_FURNITURE=true`, it avoids room-image visual search so visible furniture cannot bias recommendations. |
 | `rerank_products` | — | Deterministic scoring from dataset metadata, style, color, material, room type, and spatial fit. Existing visible furniture is not a scoring signal. |
-| `plan_placements` | — | Validated normalized floor placements. Uses detected floor zones when reliable, otherwise bottom 45-55% fallback, and rejects wall/outside/overlap candidates. |
-| `generate_images` | — | Sprint 3 pluggable renderer via `rendering/factory.py`. `overlay` opens the original room image, loads the selected product image, perspective-scales and anchors it, adds shadow, and saves the final composite. `mock_inpaint` creates masks/prompts for debug but returns the overlay composite as final. Debug masks are gated by `DEBUG_PLACEMENT=true`. |
+| `plan_placements` | **Pro** | Gemini-assisted placement planning with normalized floor polygons, scale hints, and rotation hints. Floor zones and polygons are treated as practical guidance rather than exact render boxes; deterministic floor placement remains the fallback. |
+| `generate_images` | Gemini image edit or local renderer | Pluggable renderer via `rendering/factory.py`. `gemini_image_edit` sends the room photo plus selected product reference images to `gemini-3-pro-image-preview`; placement polygons are soft guidance so the model can remove white product backgrounds, resize, rotate, match perspective, and blend shadows/occlusion. If Gemini image editing is disabled or fails, it falls back to `overlay`. `overlay` remains the deterministic GPU-free fallback renderer. `mock_inpaint` creates masks/prompts for debug but returns the overlay composite as final. Debug masks are gated by `DEBUG_PLACEMENT=true`. |
 | `validate_result` | — | Verifies all selected products exist in the catalog, have dataset metadata, image paths/URLs, and required placement fields. |
 | `persist_result` | — | Saves final designs + selected products to PostgreSQL |
 
@@ -436,7 +437,8 @@ Using both gives the best of both worlds: deep semantic understanding from text 
 - **Model tiers**:
   - `"pro"` → `gemini-3.1-pro-preview` — room analysis, design strategies, placement planning
   - `"flash"` → `gemini-3-flash-preview` — lightweight tasks, fallback
-- **Output format**: All generate calls use `responseMimeType: "application/json"` for structured output
+  - `"image"` → `gemini-3-pro-image-preview` — final room image editing from room + product reference images
+- **Output format**: Structured reasoning calls use `responseMimeType: "application/json"`; image edit calls request text + image output and save the first returned inline image
 - **Retry**: Exponential backoff, 3 attempts
 
 ### Embedding Methods

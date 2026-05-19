@@ -197,6 +197,12 @@ def test_factory_external_ai_returns_renderer() -> None:
     assert renderer.name == "external_ai_inpaint"
 
 
+def test_factory_gemini_image_edit_returns_renderer() -> None:
+    """gemini_image_edit should return GeminiImageEditRenderer."""
+    renderer = get_renderer("gemini_image_edit")
+    assert renderer.name == "gemini_image_edit"
+
+
 # ---------------------------------------------------------------------------
 # Overlay renderer
 # ---------------------------------------------------------------------------
@@ -320,6 +326,53 @@ def test_overlay_missing_image_does_not_draw_green_rectangle_in_normal_mode(tmp_
     with Image.open(result.output_path).convert("RGB") as image:
         assert image.getpixel((160, 150)) == (230, 225, 215)
 
+
+
+def test_gemini_image_edit_falls_back_when_disabled(tmp_path: Path) -> None:
+    """Gemini renderer should degrade to overlay when image generation is disabled."""
+    from app.core.config import Settings
+    from app.rendering.gemini_image_renderer import GeminiImageEditRenderer
+    from app.storage.local_storage import LocalImageStorage
+
+    settings = Settings(
+        local_image_root=tmp_path / "images",
+        room_upload_dir=tmp_path / "images" / "rooms",
+        product_image_dir=tmp_path / "images" / "products",
+        generated_image_dir=tmp_path / "images" / "generated",
+        enable_image_generation=False,
+        vertex_project_id="project",
+    )
+    storage = LocalImageStorage(settings)
+
+    room_path = storage.resolve_room_image("rooms/test.png")
+    room_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGB", (320, 240), (230, 220, 210)).save(room_path)
+
+    product_path = storage.resolve_product_image("products/chair.png")
+    product_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (80, 80), (120, 80, 60, 255)).save(product_path)
+
+    renderer = GeminiImageEditRenderer()
+    with patch("app.rendering.gemini_image_renderer.get_settings", return_value=settings):
+        result = renderer.render(
+            storage=storage,
+            room_image_path="rooms/test.png",
+            products=[
+                {
+                    "product_id": "p1",
+                    "role": "chair",
+                    "category": "chair",
+                    "name": "Chair",
+                    "image_path": "products/chair.png",
+                    "polygon": [[0.4, 0.5], [0.6, 0.5], [0.6, 0.9], [0.4, 0.9]],
+                }
+            ],
+            output_relative_path="generated/out.png",
+        )
+
+    assert result.render_method == "png_overlay_perspective"
+    assert result.output_path.exists()
+    assert "Gemini image editing is not configured" in result.debug_artifacts["fallback_reason"]
 
 # ---------------------------------------------------------------------------
 # Mock inpaint renderer

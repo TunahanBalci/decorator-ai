@@ -1,12 +1,14 @@
 import base64
 import json
 import mimetypes
+from io import BytesIO
 from pathlib import Path
 from typing import Any, TypeVar
 
 import requests
 from google.auth import default
 from google.auth.transport.requests import Request
+from PIL import Image
 from pydantic import BaseModel, ValidationError
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -37,14 +39,20 @@ class VertexAIClient:
     def _resolve_model(self, model_tier: str = "flash") -> str:
         if model_tier == "pro":
             return self.settings.vertex_pro_model_id
+        if model_tier == "image":
+            return self.settings.vertex_image_model_id
         return self.settings.vertex_model_id
 
-    def _generate_endpoint(self, model_tier: str = "flash") -> str:
+    def _generate_endpoint(
+        self,
+        model_tier: str = "flash",
+        action: str = "streamGenerateContent",
+    ) -> str:
         model = self._resolve_model(model_tier)
         return (
             "https://aiplatform.googleapis.com/v1/"
             f"projects/{self.project_id}/locations/{self.location}/"
-            f"publishers/google/models/{model}:streamGenerateContent"
+            f"publishers/google/models/{model}:{action}"
         )
 
     @property
@@ -96,6 +104,31 @@ class VertexAIClient:
                 f"Vertex AI request failed ({response.status_code}): {response.text}"
             )
         return _extract_text_from_stream(response.text)
+
+    def _generate_content(
+        self,
+        parts: list[dict[str, Any]],
+        generation_config: dict[str, Any],
+        model_tier: str,
+        timeout: int = 300,
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "contents": [{"role": "user", "parts": parts}],
+            "generationConfig": generation_config,
+            "safetySettings": _less_restrictive_safety_settings(),
+        }
+        endpoint = self._generate_endpoint(model_tier, action="generateContent")
+        response = requests.post(
+            endpoint,
+            headers=self._auth_headers(),
+            json=payload,
+            timeout=timeout,
+        )
+        if response.status_code >= 400:
+            raise AIOutputValidationError(
+                f"Vertex AI request failed ({response.status_code}): {response.text}"
+            )
+        return response.json()
 
     @retry(wait=wait_exponential(multiplier=1, min=1, max=8), stop=stop_after_attempt(3))
     def generate_json(
@@ -210,17 +243,63 @@ class VertexAIClient:
         )
 
     def generate_image_edit(self, prompt: str, images: list[Path], output_path: Path) -> Path:
-        raise NotImplementedError(
-            "Image editing is intentionally gated behind ENABLE_IMAGE_GENERATION"
+        if not self.settings.enable_image_generation:
+            raise AIOutputValidationError(
+                "Image editing is gated behind ENABLE_IMAGE_GENERATION=true"
+            )
+        if self.settings.mock_ai or not self.project_id:
+            raise AIOutputValidationError("Vertex AI is not configured for image editing")
+        if not images:
+            raise AIOutputValidationError("Image editing requires at least one input image")
+
+        parts: list[dict[str, Any]] = [{"text": prompt}]
+        for image_path in images:
+            part = _file_part(image_path, max_bytes=7 * 1024 * 1024)
+            if part:
+                parts.append(part)
+
+        data = self._generate_content(
+            parts=parts,
+            generation_config={
+                "temperature": 0.35,
+                "responseModalities": ["TEXT", "IMAGE"],
+            },
+            model_tier="image",
         )
+        image_bytes = _extract_first_inline_image(data)
+        if not image_bytes:
+            raise AIOutputValidationError("Gemini image edit did not return image data")
+
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with Image.open(BytesIO(image_bytes)) as image:
+            image.convert("RGB").save(output_path)
+        return output_path
 
 
-def _file_part(path: Path) -> dict[str, Any] | None:
+def _file_part(path: Path, max_bytes: int | None = None) -> dict[str, Any] | None:
     if not path.exists() or not path.is_file():
         return None
     mime_type = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
-    data = base64.b64encode(path.read_bytes()).decode("ascii")
+    raw = path.read_bytes()
+    if max_bytes and len(raw) > max_bytes and mime_type.startswith("image/"):
+        raw, mime_type = _compress_inline_image(path, max_bytes)
+    data = base64.b64encode(raw).decode("ascii")
     return {"inlineData": {"mimeType": mime_type, "data": data}}
+
+
+def _compress_inline_image(path: Path, max_bytes: int) -> tuple[bytes, str]:
+    from PIL import Image
+
+    with Image.open(path) as image:
+        image = image.convert("RGB")
+        image.thumbnail((2048, 2048), Image.Resampling.LANCZOS)
+        for quality in (92, 85, 78, 70):
+            buffer = BytesIO()
+            image.save(buffer, format="JPEG", quality=quality, optimize=True)
+            data = buffer.getvalue()
+            if len(data) <= max_bytes:
+                return data, "image/jpeg"
+        return data, "image/jpeg"
 
 
 def _extract_text_from_stream(raw_text: str) -> str:
@@ -259,6 +338,36 @@ def _extract_text_from_stream(raw_text: str) -> str:
                     parts.append(text)
     return "".join(parts).strip()
 
+
+def _extract_first_inline_image(payload: dict[str, Any]) -> bytes | None:
+    for candidate in payload.get("candidates", []):
+        content = candidate.get("content") or {}
+        for part in content.get("parts", []):
+            inline = part.get("inlineData") or part.get("inline_data")
+            if not inline:
+                continue
+            data = inline.get("data")
+            if not data:
+                continue
+            if isinstance(data, bytes):
+                return data
+            try:
+                return base64.b64decode(data)
+            except (TypeError, ValueError):
+                continue
+    return None
+
+
+def _less_restrictive_safety_settings() -> list[dict[str, str]]:
+    return [
+        {"category": category, "threshold": "BLOCK_ONLY_HIGH"}
+        for category in (
+            "HARM_CATEGORY_HATE_SPEECH",
+            "HARM_CATEGORY_DANGEROUS_CONTENT",
+            "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            "HARM_CATEGORY_HARASSMENT",
+        )
+    ]
 
 def load_prompt(name: str) -> str:
     return (Path(__file__).parent / "prompts" / name).read_text(encoding="utf-8")

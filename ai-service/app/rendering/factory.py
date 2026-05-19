@@ -5,10 +5,11 @@ to call ``get_renderer(settings.render_method)`` and never imports concrete
 renderer classes directly.
 
 Fallback chain:
-    ``sdxl_inpaint``        → ``overlay``  (when torch/diffusers unavailable)
-    ``external_ai_inpaint`` → ``overlay``  (when provider fails)
-    ``mock_inpaint``        → always works (uses overlay internally)
-    ``overlay``             → always works
+    ``gemini_image_edit``  → ``overlay``  (when Vertex image editing unavailable)
+    ``sdxl_inpaint``       → ``overlay``  (when torch/diffusers unavailable)
+    ``external_ai_inpaint``→ ``overlay``  (when provider fails)
+    ``mock_inpaint``       → always works (uses overlay internally)
+    ``overlay``            → always works
 """
 
 from __future__ import annotations
@@ -24,14 +25,18 @@ def get_renderer(method: str = "overlay") -> FurnitureRenderer:
     """Return a :class:`FurnitureRenderer` for the given render method.
 
     Args:
-        method: One of ``"overlay"``, ``"mock_inpaint"``, ``"sdxl_inpaint"``,
-            ``"external_ai_inpaint"``.  Unknown values fall back to ``"overlay"``.
+        method: One of ``"overlay"``, ``"gemini_image_edit"``, ``"mock_inpaint"``,
+            ``"sdxl_inpaint"``, ``"external_ai_inpaint"``. Unknown values fall back
+            to ``"overlay"``.
 
     Returns:
         A ready-to-use :class:`FurnitureRenderer` instance.
     """
     if method == "overlay":
         return _overlay()
+
+    if method in ("gemini", "gemini_image_edit"):
+        return _gemini_image_edit()
 
     if method == "mock_inpaint":
         return _mock_inpaint()
@@ -59,6 +64,11 @@ def _overlay() -> FurnitureRenderer:
 def _mock_inpaint() -> FurnitureRenderer:
     from app.rendering.mock_inpaint_renderer import MockInpaintRenderer
     return MockInpaintRenderer()
+
+
+def _gemini_image_edit() -> FurnitureRenderer:
+    from app.rendering.gemini_image_renderer import GeminiImageEditRenderer
+    return GeminiImageEditRenderer()
 
 
 def _sdxl_inpaint_or_fallback() -> FurnitureRenderer:
