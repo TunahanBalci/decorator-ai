@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../core/config/backend_config.dart';
 import '../../core/theme/app_colors.dart';
 import '../../l10n/app_localizations.dart';
 import '../../main.dart';
@@ -25,7 +24,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   final _nameController = TextEditingController();
   final _surnameController = TextEditingController();
-  final _backendUrlController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   bool _isEditing = false;
@@ -33,7 +31,6 @@ class _ProfilePageState extends State<ProfilePage> {
   String _storedSurname = '';
   DateTime? _storedBirthday;
   DateTime? _tempBirthday;
-  String _backendUrl = '';
 
   bool _localNotificationsEnabled = true;
   bool _remoteNotificationsEnabled = true;
@@ -59,8 +56,6 @@ class _ProfilePageState extends State<ProfilePage> {
           ? DateTime.tryParse(birthdayString)
           : null;
       _tempBirthday = _storedBirthday;
-      _backendUrl = BackendConfig.instance.baseUrl;
-      _backendUrlController.text = _backendUrl;
     });
 
     final localEnabled =
@@ -112,16 +107,6 @@ class _ProfilePageState extends State<ProfilePage> {
       _tempBirthday = _storedBirthday;
       _isEditing = false;
     });
-  }
-
-  Future<void> _saveBackendUrl() async {
-    final value = _backendUrlController.text.trim();
-    if (value.isEmpty) return;
-    await BackendConfig.instance.setBaseUrl(value);
-    if (!mounted) return;
-    setState(() => _backendUrl = BackendConfig.instance.baseUrl);
-    _backendUrlController.text = _backendUrl;
-    _showSnack(AppLocalizations.of(context)!.backendUrlSaved);
   }
 
   Future<void> _signInWithGoogle() async {
@@ -189,7 +174,6 @@ class _ProfilePageState extends State<ProfilePage> {
   void dispose() {
     _nameController.dispose();
     _surnameController.dispose();
-    _backendUrlController.dispose();
     super.dispose();
   }
 
@@ -550,33 +534,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ],
               ),
-            ),
-          ),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.only(top: 14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(top: 12),
-                  child: Icon(Icons.dns_rounded, color: AppColors.sage),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextField(
-                    controller: _backendUrlController,
-                    keyboardType: TextInputType.url,
-                    decoration: _inputDecoration(l10n.backendUrlLabel),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                IconButton.filledTonal(
-                  tooltip: l10n.backendUrlSaveTooltip,
-                  onPressed: _saveBackendUrl,
-                  icon: const Icon(Icons.check_rounded),
-                ),
-              ],
             ),
           ),
         ],

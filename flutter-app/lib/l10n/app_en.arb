@@ -249,7 +249,6 @@
   "scanStageRetry": "Try Again",
   "notificationDesignReady": "Your AI design is ready!",
   "notificationDesignReadyBody": "Tap to view your personalized furniture suggestions.",
-  "backendUrlLabel": "Server URL",
   "notificationDesignChannelName": "Design AI Updates",
   "@notificationDesignChannelName": {
     "description": "Android notification channel name for completed AI design notifications."
@@ -259,10 +258,10 @@
     "description": "Android notification channel description for completed AI design notifications."
   },
   "scanPreferencesTitle": "Design Brief",
-  "scanPreferencesSubtitle": "Room dimensions and optional style choices are sent to the AI backend with your photo.",
-  "scanRoomWidthLabel": "Wall",
-  "scanRoomDepthLabel": "Depth",
-  "scanCeilingHeightLabel": "Ceiling",
+  "scanPreferencesSubtitle": "Optional room dimensions and style choices are sent to the AI backend with your photo.",
+  "scanRoomWidthLabel": "Length",
+  "scanRoomDepthLabel": "Width",
+  "scanCeilingHeightLabel": "Height",
   "scanCentimetersSuffix": "cm",
   "scanDesignCountLabel": "Designs",
   "scanReplaceFurnitureLabel": "Replace existing furniture",
@@ -271,9 +270,6 @@
   "scanMaterialLabel": "Material",
   "scanColorsLabel": "Colors",
   "scanTemperatureLabel": "Mood",
-  "scanSizeLabel": "Size",
-  "scanExtraPreferencesLabel": "Notes",
-  "scanExtraPreferencesHint": "Budget, must-keep pieces, color details...",
   "scanFurnitureSofa": "Sofa",
   "scanFurnitureArmchair": "Armchair",
   "scanFurnitureCoffeeTable": "Coffee table",
@@ -300,8 +296,6 @@
   "scanSizeSmall": "Small",
   "scanSizeMedium": "Medium",
   "scanSizeLarge": "Large",
-  "backendUrlSaveTooltip": "Save server URL",
-  "backendUrlSaved": "Server URL saved.",
   "profileFirebaseUnavailable": "Firebase is not configured for this platform yet.",
   "profileSignInCancelled": "Sign-in cancelled.",
   "designProductCount": "{count} products suggested",
@@ -312,5 +306,66 @@
         "type": "int"
       }
     }
-  }
+  },
+  "scanPreferencesCollapsedSubtitle": "Tap to add optional dimensions, furniture, style, color, and mood.",
+  "scanRoomDimensionsLabel": "Room dimensions",
+  "scanAutoDesignCount": "{count, plural, =1{1 design will be generated because custom parameters are set.} other{3 designs will be generated when no custom parameters are set.}}",
+  "@scanAutoDesignCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scanFurnitureVisibleCount": "{count} shown",
+  "@scanFurnitureVisibleCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scanNoColorSelected": "No color selected",
+  "scanSelectedColor": "Selected: {color}",
+  "@scanSelectedColor": {
+    "placeholders": {
+      "color": {
+        "type": "String"
+      }
+    }
+  },
+  "scanClearColor": "Clear",
+  "scanHueLabel": "Hue",
+  "scanSaturationLabel": "Saturation",
+  "scanLightnessLabel": "Lightness",
+  "scanFurnitureChair": "Chair",
+  "scanFurnitureDiningChair": "Dining chair",
+  "scanFurnitureDiningTable": "Dining table",
+  "scanFurnitureSideTable": "Side table",
+  "scanFurnitureConsoleTable": "Console table",
+  "scanFurnitureBed": "Bed",
+  "scanFurnitureWardrobe": "Wardrobe",
+  "scanFurnitureDresser": "Dresser",
+  "scanFurnitureNightstand": "Nightstand",
+  "scanFurnitureBookshelf": "Bookshelf",
+  "scanFurnitureDesk": "Desk",
+  "scanFurnitureOfficeChair": "Office chair",
+  "scanFurnitureLamp": "Lamp",
+  "scanFurnitureFloorLamp": "Floor lamp",
+  "scanFurniturePendantLamp": "Pendant lamp",
+  "scanFurnitureCurtain": "Curtain",
+  "scanFurnitureMirror": "Mirror",
+  "scanFurnitureWallArt": "Wall art",
+  "scanFurniturePlantPot": "Plant pot",
+  "scanFurnitureDecoration": "Decoration",
+  "scanColorBlack": "Black",
+  "scanColorCream": "Cream",
+  "scanColorBrown": "Brown",
+  "scanColorRed": "Red",
+  "scanColorOrange": "Orange",
+  "scanColorYellow": "Yellow",
+  "scanColorBlue": "Blue",
+  "scanColorPurple": "Purple",
+  "scanColorPink": "Pink",
+  "scanColorMulticolor": "Multicolor"
 }

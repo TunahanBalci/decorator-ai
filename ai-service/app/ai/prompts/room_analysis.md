@@ -17,7 +17,7 @@ Instructions:
    - polygon: quadrilateral in image pixel coordinates
    - notes: any constraints (near outlet, under window, etc.)
 8. Record spatial constraints (e.g. doorways, windows, radiators, load-bearing pillars) as a dict.
-9. Provide an overall confidence score (0.0-1.0) for the analysis.
+9. Provide a confidence score (0.0-1.0) for the analysis as the 'confidence' field.
 
 Rules:
 - All polygons MUST be within the image coordinate space.

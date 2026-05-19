@@ -79,18 +79,16 @@ class DesignJobResult {
 /// User-provided scan options sent to the AI backend.
 class ScanDesignOptions {
   const ScanDesignOptions({
-    this.currentWallLengthCm = 400,
-    this.roomDepthCm = 350,
-    this.ceilingHeightCm = 270,
+    this.currentWallLengthCm,
+    this.roomDepthCm,
+    this.ceilingHeightCm,
     this.replaceExistingFurniture = false,
     this.requestedFurnitureTypes = const <String>[],
     this.designStyle,
     this.material,
     this.colors = const <String>[],
     this.temperature,
-    this.size,
-    this.extraPreferences,
-    this.designCount = 2,
+    this.designCount = 3,
   });
 
   final double? currentWallLengthCm;
@@ -102,8 +100,6 @@ class ScanDesignOptions {
   final String? material;
   final List<String> colors;
   final String? temperature;
-  final String? size;
-  final String? extraPreferences;
   final int designCount;
 
   Map<String, dynamic> get roomDimensions {
@@ -125,8 +121,7 @@ class ScanDesignOptions {
         material != null ||
         colors.isNotEmpty ||
         temperature != null ||
-        size != null ||
-        (extraPreferences?.trim().isNotEmpty ?? false);
+        temperature != null;
 
     return {
       'mode': hasGuidance ? 'guided_design' : 'auto_design',
@@ -137,9 +132,6 @@ class ScanDesignOptions {
       if (material != null) 'material': material,
       'colors': colors,
       if (temperature != null) 'temperature': temperature,
-      if (size != null) 'size': size,
-      if (extraPreferences?.trim().isNotEmpty ?? false)
-        'extra_preferences': extraPreferences!.trim(),
     };
   }
 }
@@ -147,9 +139,35 @@ class ScanDesignOptions {
 /// REST client for the ai-service backend.
 class AiBackendClient {
   AiBackendClient({http.Client? httpClient})
-    : _client = httpClient ?? http.Client();
+    : _client = httpClient ?? http.Client() {
+    _startPeriodicHealthCheck();
+  }
 
   final http.Client _client;
+  Timer? _healthTimer;
+
+  void _startPeriodicHealthCheck() {
+    if (kIsWeb) return;
+    try {
+      if (Platform.environment.containsKey('FLUTTER_TEST')) return;
+    } catch (_) {
+      return;
+    }
+
+    _checkAndPrintHealth();
+    _healthTimer = Timer.periodic(const Duration(seconds: 45), (_) {
+      _checkAndPrintHealth();
+    });
+  }
+
+  Future<void> _checkAndPrintHealth() async {
+    final ok = await healthCheck();
+    if (ok) {
+      debugPrint('[BackendConnection] Connection to backend at $_baseUrl is working (OK)');
+    } else {
+      debugPrint('[BackendConnection] WARNING: Connection to backend at $_baseUrl is NOT reachable');
+    }
+  }
 
   String get _baseUrl => BackendConfig.instance.baseUrl;
 
@@ -303,6 +321,7 @@ class AiBackendClient {
   }
 
   void dispose() {
+    _healthTimer?.cancel();
     _client.close();
   }
 }

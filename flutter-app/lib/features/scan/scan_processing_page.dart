@@ -46,7 +46,17 @@ class _ScanProcessingPageState extends State<ScanProcessingPage>
       vsync: this,
       duration: const Duration(milliseconds: 1600),
     )..repeat(reverse: true);
-    _startProcessing();
+  }
+
+  bool _hasStarted = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_hasStarted) {
+      _hasStarted = true;
+      _startProcessing();
+    }
   }
 
   @override

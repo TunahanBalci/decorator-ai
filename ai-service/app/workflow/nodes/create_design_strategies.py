@@ -11,7 +11,7 @@ from app.workflow.state import DesignWorkflowState
 
 logger = structlog.get_logger(__name__)
 
-DEFAULT_ROLES = ["coffee_table", "carpet", "floor_lamp"]
+DEFAULT_ROLES = ["coffee_table", "rug", "floor_lamp"]
 
 
 def create_design_strategies_node(db: Session):

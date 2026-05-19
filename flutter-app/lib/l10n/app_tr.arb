@@ -175,14 +175,13 @@
   "scanStageRetry": "Tekrar Dene",
   "notificationDesignReady": "AI tasarımınız hazır!",
   "notificationDesignReadyBody": "Kişiselleştirilmiş mobilya önerilerinizi görmek için dokunun.",
-  "backendUrlLabel": "Sunucu URL'si",
   "notificationDesignChannelName": "Tasarım AI Güncellemeleri",
   "notificationDesignChannelDescription": "AI tasarımlarınız hazır olduğunda gelen bildirimler.",
   "scanPreferencesTitle": "Tasarım Özeti",
-  "scanPreferencesSubtitle": "Oda ölçüleri ve isteğe bağlı stil seçimleri fotoğrafınla birlikte AI backend’e gönderilir.",
-  "scanRoomWidthLabel": "Duvar",
-  "scanRoomDepthLabel": "Derinlik",
-  "scanCeilingHeightLabel": "Tavan",
+  "scanPreferencesSubtitle": "İsteğe bağlı oda ölçüleri ve stil seçimleri fotoğrafınla birlikte AI backend’e gönderilir.",
+  "scanRoomWidthLabel": "Uzunluk",
+  "scanRoomDepthLabel": "Genişlik",
+  "scanCeilingHeightLabel": "Yükseklik",
   "scanCentimetersSuffix": "cm",
   "scanDesignCountLabel": "Tasarım",
   "scanReplaceFurnitureLabel": "Mevcut mobilyayı değiştir",
@@ -191,9 +190,6 @@
   "scanMaterialLabel": "Malzeme",
   "scanColorsLabel": "Renkler",
   "scanTemperatureLabel": "Atmosfer",
-  "scanSizeLabel": "Boyut",
-  "scanExtraPreferencesLabel": "Notlar",
-  "scanExtraPreferencesHint": "Bütçe, kalacak parçalar, renk detayları...",
   "scanFurnitureSofa": "Koltuk",
   "scanFurnitureArmchair": "Berjer",
   "scanFurnitureCoffeeTable": "Sehpa",
@@ -220,9 +216,68 @@
   "scanSizeSmall": "Küçük",
   "scanSizeMedium": "Orta",
   "scanSizeLarge": "Büyük",
-  "backendUrlSaveTooltip": "Sunucu URL’sini kaydet",
-  "backendUrlSaved": "Sunucu URL’si kaydedildi.",
   "profileFirebaseUnavailable": "Firebase bu platform için henüz yapılandırılmadı.",
   "profileSignInCancelled": "Giriş iptal edildi.",
-  "designProductCount": "{count} ürün önerildi"
+  "designProductCount": "{count} ürün önerildi",
+  "scanPreferencesCollapsedSubtitle": "İsteğe bağlı ölçü, mobilya, stil, renk ve ruh hali eklemek için dokun.",
+  "scanRoomDimensionsLabel": "Oda ölçüleri",
+  "scanAutoDesignCount": "{count, plural, =1{Özel parametre girildiği için 1 tasarım üretilecek.} other{Özel parametre girilmezse 3 tasarım üretilecek.}}",
+  "@scanAutoDesignCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scanFurnitureVisibleCount": "{count} gösteriliyor",
+  "@scanFurnitureVisibleCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scanNoColorSelected": "Renk seçilmedi",
+  "scanSelectedColor": "Seçili: {color}",
+  "@scanSelectedColor": {
+    "placeholders": {
+      "color": {
+        "type": "String"
+      }
+    }
+  },
+  "scanClearColor": "Temizle",
+  "scanHueLabel": "Ton",
+  "scanSaturationLabel": "Doygunluk",
+  "scanLightnessLabel": "Açıklık",
+  "scanFurnitureChair": "Sandalye",
+  "scanFurnitureDiningChair": "Yemek sandalyesi",
+  "scanFurnitureDiningTable": "Yemek masası",
+  "scanFurnitureSideTable": "Yan sehpa",
+  "scanFurnitureConsoleTable": "Konsol",
+  "scanFurnitureBed": "Yatak",
+  "scanFurnitureWardrobe": "Gardırop",
+  "scanFurnitureDresser": "Şifonyer",
+  "scanFurnitureNightstand": "Komodin",
+  "scanFurnitureBookshelf": "Kitaplık",
+  "scanFurnitureDesk": "Çalışma masası",
+  "scanFurnitureOfficeChair": "Ofis sandalyesi",
+  "scanFurnitureLamp": "Lamba",
+  "scanFurnitureFloorLamp": "Lambader",
+  "scanFurniturePendantLamp": "Sarkıt lamba",
+  "scanFurnitureCurtain": "Perde",
+  "scanFurnitureMirror": "Ayna",
+  "scanFurnitureWallArt": "Duvar sanatı",
+  "scanFurniturePlantPot": "Saksı",
+  "scanFurnitureDecoration": "Dekorasyon",
+  "scanColorBlack": "Siyah",
+  "scanColorCream": "Krem",
+  "scanColorBrown": "Kahverengi",
+  "scanColorRed": "Kırmızı",
+  "scanColorOrange": "Turuncu",
+  "scanColorYellow": "Sarı",
+  "scanColorBlue": "Mavi",
+  "scanColorPurple": "Mor",
+  "scanColorPink": "Pembe",
+  "scanColorMulticolor": "Çok renkli"
 }

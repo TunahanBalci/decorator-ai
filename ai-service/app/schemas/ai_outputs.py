@@ -1,7 +1,7 @@
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 
 class DetectedFurniture(BaseModel):
@@ -26,7 +26,7 @@ class RoomAnalysisResult(BaseModel):
     existing_furniture: list[DetectedFurniture] = Field(default_factory=list)
     available_placement_zones: list[PlacementZone] = Field(default_factory=list)
     constraints: dict = Field(default_factory=dict)
-    confidence: float
+    confidence: float = Field(validation_alias=AliasChoices('confidence', 'overall_confidence'))
 
 
 class DesignStrategy(BaseModel):
@@ -45,6 +45,9 @@ class ProductRetrievalIntent(BaseModel):
     colors: list[str] = Field(default_factory=list)
     temperature: str | None = None
     room_types: list[str] = Field(default_factory=list)
+    min_width_cm: float | None = None
+    min_depth_cm: float | None = None
+    min_height_cm: float | None = None
     max_width_cm: float | None = None
     max_depth_cm: float | None = None
     max_height_cm: float | None = None

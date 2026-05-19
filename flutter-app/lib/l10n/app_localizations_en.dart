@@ -598,9 +598,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tap to view your personalized furniture suggestions.';
 
   @override
-  String get backendUrlLabel => 'Server URL';
-
-  @override
   String get notificationDesignChannelName => 'Design AI Updates';
 
   @override
@@ -612,16 +609,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scanPreferencesSubtitle =>
-      'Room dimensions and optional style choices are sent to the AI backend with your photo.';
+      'Optional room dimensions and style choices are sent to the AI backend with your photo.';
 
   @override
-  String get scanRoomWidthLabel => 'Wall';
+  String get scanRoomWidthLabel => 'Length';
 
   @override
-  String get scanRoomDepthLabel => 'Depth';
+  String get scanRoomDepthLabel => 'Width';
 
   @override
-  String get scanCeilingHeightLabel => 'Ceiling';
+  String get scanCeilingHeightLabel => 'Height';
 
   @override
   String get scanCentimetersSuffix => 'cm';
@@ -646,16 +643,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scanTemperatureLabel => 'Mood';
-
-  @override
-  String get scanSizeLabel => 'Size';
-
-  @override
-  String get scanExtraPreferencesLabel => 'Notes';
-
-  @override
-  String get scanExtraPreferencesHint =>
-      'Budget, must-keep pieces, color details...';
 
   @override
   String get scanFurnitureSofa => 'Sofa';
@@ -736,12 +723,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scanSizeLarge => 'Large';
 
   @override
-  String get backendUrlSaveTooltip => 'Save server URL';
-
-  @override
-  String get backendUrlSaved => 'Server URL saved.';
-
-  @override
   String get profileFirebaseUnavailable =>
       'Firebase is not configured for this platform yet.';
 
@@ -752,4 +733,137 @@ class AppLocalizationsEn extends AppLocalizations {
   String designProductCount(int count) {
     return '$count products suggested';
   }
+
+  @override
+  String get scanPreferencesCollapsedSubtitle =>
+      'Tap to add optional dimensions, furniture, style, color, and mood.';
+
+  @override
+  String get scanRoomDimensionsLabel => 'Room dimensions';
+
+  @override
+  String scanAutoDesignCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '3 designs will be generated when no custom parameters are set.',
+      one: '1 design will be generated because custom parameters are set.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String scanFurnitureVisibleCount(int count) {
+    return '$count shown';
+  }
+
+  @override
+  String get scanNoColorSelected => 'No color selected';
+
+  @override
+  String scanSelectedColor(String color) {
+    return 'Selected: $color';
+  }
+
+  @override
+  String get scanClearColor => 'Clear';
+
+  @override
+  String get scanHueLabel => 'Hue';
+
+  @override
+  String get scanSaturationLabel => 'Saturation';
+
+  @override
+  String get scanLightnessLabel => 'Lightness';
+
+  @override
+  String get scanFurnitureChair => 'Chair';
+
+  @override
+  String get scanFurnitureDiningChair => 'Dining chair';
+
+  @override
+  String get scanFurnitureDiningTable => 'Dining table';
+
+  @override
+  String get scanFurnitureSideTable => 'Side table';
+
+  @override
+  String get scanFurnitureConsoleTable => 'Console table';
+
+  @override
+  String get scanFurnitureBed => 'Bed';
+
+  @override
+  String get scanFurnitureWardrobe => 'Wardrobe';
+
+  @override
+  String get scanFurnitureDresser => 'Dresser';
+
+  @override
+  String get scanFurnitureNightstand => 'Nightstand';
+
+  @override
+  String get scanFurnitureBookshelf => 'Bookshelf';
+
+  @override
+  String get scanFurnitureDesk => 'Desk';
+
+  @override
+  String get scanFurnitureOfficeChair => 'Office chair';
+
+  @override
+  String get scanFurnitureLamp => 'Lamp';
+
+  @override
+  String get scanFurnitureFloorLamp => 'Floor lamp';
+
+  @override
+  String get scanFurniturePendantLamp => 'Pendant lamp';
+
+  @override
+  String get scanFurnitureCurtain => 'Curtain';
+
+  @override
+  String get scanFurnitureMirror => 'Mirror';
+
+  @override
+  String get scanFurnitureWallArt => 'Wall art';
+
+  @override
+  String get scanFurniturePlantPot => 'Plant pot';
+
+  @override
+  String get scanFurnitureDecoration => 'Decoration';
+
+  @override
+  String get scanColorBlack => 'Black';
+
+  @override
+  String get scanColorCream => 'Cream';
+
+  @override
+  String get scanColorBrown => 'Brown';
+
+  @override
+  String get scanColorRed => 'Red';
+
+  @override
+  String get scanColorOrange => 'Orange';
+
+  @override
+  String get scanColorYellow => 'Yellow';
+
+  @override
+  String get scanColorBlue => 'Blue';
+
+  @override
+  String get scanColorPurple => 'Purple';
+
+  @override
+  String get scanColorPink => 'Pink';
+
+  @override
+  String get scanColorMulticolor => 'Multicolor';
 }

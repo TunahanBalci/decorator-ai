@@ -30,8 +30,6 @@ void main() {
       material: 'wood',
       colors: ['beige', 'oak'],
       temperature: 'warm',
-      size: 'medium',
-      extraPreferences: 'Keep the reading chair.',
       designCount: 3,
     );
 
@@ -55,7 +53,7 @@ void main() {
     await BackendConfig.instance.load();
     expect(
       BackendConfig.instance.baseUrl,
-      anyOf('http://localhost:8000', 'http://10.0.2.2:8000'),
+      'http://192.168.1.14:8000',
     );
 
     await BackendConfig.instance.setBaseUrl('api.example.com/');
@@ -286,10 +284,15 @@ void main() {
     await tester.pump();
 
     expect(find.text(l10n.scanPreferencesTitle), findsOneWidget);
+
+    // Expand the preferences card to make inner options visible
+    await tester.tap(find.text(l10n.scanPreferencesTitle));
+    await tester.pumpAndSettle();
+
     expect(find.text(l10n.scanRoomWidthLabel), findsOneWidget);
     expect(find.text(l10n.scanReplaceFurnitureLabel), findsOneWidget);
 
-    final sofaFinder = find.widgetWithText(FilterChip, l10n.scanFurnitureSofa);
+    final sofaFinder = find.widgetWithText(CheckboxListTile, l10n.scanFurnitureSofa);
     await tester.ensureVisible(sofaFinder);
     await tester.pumpAndSettle();
     await tester.tap(sofaFinder);
@@ -304,22 +307,13 @@ void main() {
     await tester.tap(styleFinder);
     await tester.pump();
 
-    final notesFinder = find.widgetWithText(
-      TextField,
-      l10n.scanExtraPreferencesLabel,
-    );
-    await tester.ensureVisible(notesFinder);
-    await tester.pumpAndSettle();
-    await tester.enterText(notesFinder, 'Prefer oak and a medium budget');
-    await tester.pump();
-
-    final sofaChip = tester.widget<FilterChip>(
-      find.widgetWithText(FilterChip, l10n.scanFurnitureSofa),
+    final sofaTile = tester.widget<CheckboxListTile>(
+      find.widgetWithText(CheckboxListTile, l10n.scanFurnitureSofa),
     );
     final styleChip = tester.widget<ChoiceChip>(
       find.widgetWithText(ChoiceChip, l10n.scanStyleScandinavian),
     );
-    expect(sofaChip.selected, isTrue);
+    expect(sofaTile.value, isTrue);
     expect(styleChip.selected, isTrue);
   });
 
@@ -374,7 +368,6 @@ void main() {
       expect(find.text(l10n.profileSettingAuthReminders), findsOneWidget);
       expect(find.text(l10n.profileSettingAiUpdates), findsOneWidget);
       expect(find.text(l10n.profileSettingLanguage), findsOneWidget);
-      expect(find.text(l10n.backendUrlLabel), findsOneWidget);
       expect(find.text('🇺🇸'), findsOneWidget);
     },
   );

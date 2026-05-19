@@ -14,26 +14,27 @@ class ScanPage extends StatefulWidget {
 }
 
 class _ScanPageState extends State<ScanPage> {
-  final _wallLengthController = TextEditingController(text: '400');
-  final _roomDepthController = TextEditingController(text: '350');
-  final _ceilingHeightController = TextEditingController(text: '270');
-  final _extraPreferencesController = TextEditingController();
+  final _roomLengthController = TextEditingController();
+  final _roomWidthController = TextEditingController();
+  final _roomHeightController = TextEditingController();
 
+  bool _preferencesExpanded = false;
   bool _replaceExistingFurniture = false;
-  int _designCount = 2;
+  int _furnitureVisibleCount = 8;
   final Set<String> _requestedFurnitureTypes = <String>{};
-  final Set<String> _colors = <String>{};
   String? _designStyle;
   String? _material;
   String? _temperature;
-  String? _size;
+  bool _colorSelected = false;
+  double _hue = 34;
+  double _saturation = 0.38;
+  double _lightness = 0.78;
 
   @override
   void dispose() {
-    _wallLengthController.dispose();
-    _roomDepthController.dispose();
-    _ceilingHeightController.dispose();
-    _extraPreferencesController.dispose();
+    _roomLengthController.dispose();
+    _roomWidthController.dispose();
+    _roomHeightController.dispose();
     super.dispose();
   }
 
@@ -47,25 +48,58 @@ class _ScanPageState extends State<ScanPage> {
 
   ScanDesignOptions _scanOptions() {
     return ScanDesignOptions(
-      currentWallLengthCm: _parseDimension(_wallLengthController.text),
-      roomDepthCm: _parseDimension(_roomDepthController.text),
-      ceilingHeightCm: _parseDimension(_ceilingHeightController.text),
+      currentWallLengthCm: _parseDimension(_roomLengthController.text),
+      roomDepthCm: _parseDimension(_roomWidthController.text),
+      ceilingHeightCm: _parseDimension(_roomHeightController.text),
       replaceExistingFurniture: _replaceExistingFurniture,
       requestedFurnitureTypes: _requestedFurnitureTypes.toList()..sort(),
       designStyle: _designStyle,
       material: _material,
-      colors: _colors.toList()..sort(),
+      colors: _colorSelected ? <String>[_selectedColorName()] : const <String>[],
       temperature: _temperature,
-      size: _size,
-      extraPreferences: _extraPreferencesController.text,
-      designCount: _designCount,
+      designCount: _hasCustomParameters ? 1 : 3,
     );
+  }
+
+  bool get _hasCustomParameters {
+    return _roomLengthController.text.trim().isNotEmpty ||
+        _roomWidthController.text.trim().isNotEmpty ||
+        _roomHeightController.text.trim().isNotEmpty ||
+        _replaceExistingFurniture ||
+        _requestedFurnitureTypes.isNotEmpty ||
+        _designStyle != null ||
+        _material != null ||
+        _temperature != null ||
+        _colorSelected;
   }
 
   double? _parseDimension(String value) {
     final normalized = value.trim().replaceAll(',', '.');
     if (normalized.isEmpty) return null;
     return double.tryParse(normalized);
+  }
+
+  Color _selectedColor() {
+    return HSLColor.fromAHSL(1, _hue, _saturation, _lightness).toColor();
+  }
+
+  String _selectedColorName() {
+    if (_lightness > 0.88 && _saturation < 0.22) return 'white';
+    if (_lightness < 0.18) return 'black';
+    if (_saturation < 0.16) return 'gray';
+    if (_hue < 18 || _hue >= 345) return 'red';
+    if (_hue < 45) return _lightness > 0.72 ? 'beige' : 'brown';
+    if (_hue < 70) return _lightness > 0.68 ? 'cream' : 'yellow';
+    if (_hue < 165) return 'green';
+    if (_hue < 255) return 'blue';
+    if (_hue < 295) return 'purple';
+    if (_hue < 345) return 'pink';
+    return 'multicolor';
+  }
+
+  String _selectedColorLabel(AppLocalizations l10n) {
+    final choices = _colorNameChoices(l10n);
+    return choices[_selectedColorName()] ?? _selectedColorName();
   }
 
   void _showTips(BuildContext context, AppLocalizations l10n) {
@@ -238,8 +272,8 @@ class _ScanPageState extends State<ScanPage> {
   }
 
   Widget _preferencesCard(AppLocalizations l10n) {
+    final designCount = _hasCustomParameters ? 1 : 3;
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
@@ -253,182 +287,377 @@ class _ScanPageState extends State<ScanPage> {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: AppColors.sage.withValues(alpha: 0.13),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: const Icon(Icons.tune_rounded, color: AppColors.sage),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.scanPreferencesTitle,
-                      style: const TextStyle(
-                        color: AppColors.ink,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                      ),
+          InkWell(
+            borderRadius: BorderRadius.circular(24),
+            onTap: () => setState(() {
+              _preferencesExpanded = !_preferencesExpanded;
+            }),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+              child: Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: AppColors.sage.withValues(alpha: 0.13),
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      l10n.scanPreferencesSubtitle,
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        height: 1.3,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: _DimensionField(
-                  controller: _wallLengthController,
-                  label: l10n.scanRoomWidthLabel,
-                  suffix: l10n.scanCentimetersSuffix,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _DimensionField(
-                  controller: _roomDepthController,
-                  label: l10n.scanRoomDepthLabel,
-                  suffix: l10n.scanCentimetersSuffix,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _DimensionField(
-                  controller: _ceilingHeightController,
-                  label: l10n.scanCeilingHeightLabel,
-                  suffix: l10n.scanCentimetersSuffix,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<int>(
-                  initialValue: _designCount,
-                  decoration: _inputDecoration(l10n.scanDesignCountLabel),
-                  borderRadius: BorderRadius.circular(18),
-                  items: const [1, 2, 3]
-                      .map(
-                        (count) => DropdownMenuItem<int>(
-                          value: count,
-                          child: Text('$count'),
+                    child: const Icon(Icons.tune_rounded, color: AppColors.sage),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.scanPreferencesTitle,
+                          style: const TextStyle(
+                            color: AppColors.ink,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) setState(() => _designCount = value);
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SwitchListTile.adaptive(
-                  contentPadding: EdgeInsets.zero,
-                  value: _replaceExistingFurniture,
-                  activeTrackColor: AppColors.sage,
-                  title: Text(
-                    l10n.scanReplaceFurnitureLabel,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.ink,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
+                        const SizedBox(height: 4),
+                        Text(
+                          _preferencesExpanded
+                              ? l10n.scanPreferencesSubtitle
+                              : l10n.scanPreferencesCollapsedSubtitle,
+                          style: const TextStyle(
+                            color: AppColors.muted,
+                            height: 1.3,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  onChanged: (value) {
-                    setState(() => _replaceExistingFurniture = value);
-                  },
-                ),
+                  const SizedBox(width: 12),
+                  Icon(
+                    _preferencesExpanded
+                        ? Icons.expand_less_rounded
+                        : Icons.expand_more_rounded,
+                    color: AppColors.ink,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-          const SizedBox(height: 12),
-          _sectionLabel(l10n.scanFurnitureTypesLabel),
-          _multiSelectChips(_furnitureChoices(l10n), _requestedFurnitureTypes),
-          const SizedBox(height: 12),
-          _sectionLabel(l10n.scanStyleLabel),
-          _singleSelectChips(
-            _styleChoices(l10n),
-            _designStyle,
-            (value) => setState(() => _designStyle = value),
-          ),
-          const SizedBox(height: 12),
-          _sectionLabel(l10n.scanMaterialLabel),
-          _singleSelectChips(
-            _materialChoices(l10n),
-            _material,
-            (value) => setState(() => _material = value),
-          ),
-          const SizedBox(height: 12),
-          _sectionLabel(l10n.scanColorsLabel),
-          _multiSelectChips(_colorChoices(l10n), _colors),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _sectionLabel(l10n.scanTemperatureLabel),
-                    _singleSelectChips(
-                      _temperatureChoices(l10n),
-                      _temperature,
-                      (value) => setState(() => _temperature = value),
-                    ),
-                  ],
-                ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox(width: double.infinity),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(height: 1),
+                  const SizedBox(height: 16),
+                  _autoDesignCountRow(l10n, designCount),
+                  const SizedBox(height: 16),
+                  _sectionLabel(l10n.scanRoomDimensionsLabel),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _DimensionField(
+                          controller: _roomLengthController,
+                          label: l10n.scanRoomWidthLabel,
+                          suffix: l10n.scanCentimetersSuffix,
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _DimensionField(
+                          controller: _roomWidthController,
+                          label: l10n.scanRoomDepthLabel,
+                          suffix: l10n.scanCentimetersSuffix,
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _DimensionField(
+                          controller: _roomHeightController,
+                          label: l10n.scanCeilingHeightLabel,
+                          suffix: l10n.scanCentimetersSuffix,
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  _replaceFurnitureRow(l10n),
+                  const SizedBox(height: 14),
+                  _furnitureChecklist(l10n),
+                  const SizedBox(height: 14),
+                  _sectionLabel(l10n.scanStyleLabel),
+                  _singleSelectChips(
+                    _styleChoices(l10n),
+                    _designStyle,
+                    (value) => setState(() => _designStyle = value),
+                  ),
+                  const SizedBox(height: 14),
+                  _sectionLabel(l10n.scanMaterialLabel),
+                  _singleSelectChips(
+                    _materialChoices(l10n),
+                    _material,
+                    (value) => setState(() => _material = value),
+                  ),
+                  const SizedBox(height: 14),
+                  _colorSelector(l10n),
+                  const SizedBox(height: 14),
+                  _sectionLabel(l10n.scanTemperatureLabel),
+                  _singleSelectChips(
+                    _temperatureChoices(l10n),
+                    _temperature,
+                    (value) => setState(() => _temperature = value),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _sectionLabel(l10n.scanSizeLabel),
-                    _singleSelectChips(
-                      _sizeChoices(l10n),
-                      _size,
-                      (value) => setState(() => _size = value),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          TextField(
-            controller: _extraPreferencesController,
-            minLines: 2,
-            maxLines: 4,
-            decoration: _inputDecoration(
-              l10n.scanExtraPreferencesLabel,
-            ).copyWith(hintText: l10n.scanExtraPreferencesHint),
+            ),
+            crossFadeState: _preferencesExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 180),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _autoDesignCountRow(AppLocalizations l10n, int designCount) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.cream,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.auto_awesome_rounded, color: AppColors.clay),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              l10n.scanAutoDesignCount(designCount),
+              style: const TextStyle(
+                color: AppColors.ink,
+                fontWeight: FontWeight.w800,
+                height: 1.25,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _replaceFurnitureRow(AppLocalizations l10n) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.cream,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.swap_horiz_rounded, color: AppColors.sage),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              l10n.scanReplaceFurnitureLabel,
+              style: const TextStyle(
+                color: AppColors.ink,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          Switch.adaptive(
+            value: _replaceExistingFurniture,
+            activeTrackColor: AppColors.sage,
+            onChanged: (value) {
+              setState(() => _replaceExistingFurniture = value);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _furnitureChecklist(AppLocalizations l10n) {
+    final choices = _furnitureChoices(l10n);
+    final visibleChoices = choices.take(_furnitureVisibleCount).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionLabel(l10n.scanFurnitureTypesLabel),
+        Row(
+          children: [
+            Expanded(
+              child: Slider(
+                value: _furnitureVisibleCount.toDouble(),
+                min: 4,
+                max: choices.length.toDouble(),
+                divisions: choices.length - 4,
+                label: l10n.scanFurnitureVisibleCount(_furnitureVisibleCount),
+                activeColor: AppColors.sage,
+                onChanged: (value) {
+                  setState(() => _furnitureVisibleCount = value.round());
+                },
+              ),
+            ),
+            SizedBox(
+              width: 92,
+              child: Text(
+                l10n.scanFurnitureVisibleCount(_furnitureVisibleCount),
+                textAlign: TextAlign.end,
+                style: const TextStyle(
+                  color: AppColors.muted,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ...visibleChoices.map((choice) {
+          final selected = _requestedFurnitureTypes.contains(choice.value);
+          return CheckboxListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
+            value: selected,
+            activeColor: AppColors.sage,
+            title: Text(
+              choice.label,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            onChanged: (value) {
+              setState(() {
+                if (value ?? false) {
+                  _requestedFurnitureTypes.add(choice.value);
+                } else {
+                  _requestedFurnitureTypes.remove(choice.value);
+                }
+              });
+            },
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _colorSelector(AppLocalizations l10n) {
+    final color = _selectedColor();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionLabel(l10n.scanColorsLabel),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.cream,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _colorSelected
+                          ? l10n.scanSelectedColor(_selectedColorLabel(l10n))
+                          : l10n.scanNoColorSelected,
+                      style: const TextStyle(
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => setState(() => _colorSelected = false),
+                    child: Text(l10n.scanClearColor),
+                  ),
+                ],
+              ),
+              _colorSlider(
+                label: l10n.scanHueLabel,
+                value: _hue,
+                min: 0,
+                max: 360,
+                onChanged: (value) => setState(() {
+                  _hue = value;
+                  _colorSelected = true;
+                }),
+              ),
+              _colorSlider(
+                label: l10n.scanSaturationLabel,
+                value: _saturation,
+                min: 0,
+                max: 1,
+                onChanged: (value) => setState(() {
+                  _saturation = value;
+                  _colorSelected = true;
+                }),
+              ),
+              _colorSlider(
+                label: l10n.scanLightnessLabel,
+                value: _lightness,
+                min: 0,
+                max: 1,
+                onChanged: (value) => setState(() {
+                  _lightness = value;
+                  _colorSelected = true;
+                }),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _colorSlider({
+    required String label,
+    required double value,
+    required double min,
+    required double max,
+    required ValueChanged<double> onChanged,
+  }) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 86,
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.muted,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Slider(
+            value: value,
+            min: min,
+            max: max,
+            activeColor: AppColors.sage,
+            onChanged: onChanged,
+          ),
+        ),
+      ],
     );
   }
 
@@ -446,45 +675,6 @@ class _ScanPageState extends State<ScanPage> {
     );
   }
 
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      filled: true,
-      fillColor: AppColors.cream,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
-      ),
-    );
-  }
-
-  Widget _multiSelectChips(List<_ScanChoice> choices, Set<String> selected) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: choices.map((choice) {
-        final isSelected = selected.contains(choice.value);
-        return FilterChip(
-          label: Text(choice.label),
-          selected: isSelected,
-          onSelected: (value) {
-            setState(() {
-              if (value) {
-                selected.add(choice.value);
-              } else {
-                selected.remove(choice.value);
-              }
-            });
-          },
-          selectedColor: AppColors.sage.withValues(alpha: 0.22),
-          checkmarkColor: AppColors.sage,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w800),
-          side: const BorderSide(color: AppColors.border),
-        );
-      }).toList(),
-    );
-  }
 
   Widget _singleSelectChips(
     List<_ScanChoice> choices,
@@ -511,11 +701,30 @@ class _ScanPageState extends State<ScanPage> {
   List<_ScanChoice> _furnitureChoices(AppLocalizations l10n) => [
     _ScanChoice('sofa', l10n.scanFurnitureSofa),
     _ScanChoice('armchair', l10n.scanFurnitureArmchair),
+    _ScanChoice('chair', l10n.scanFurnitureChair),
+    _ScanChoice('dining_chair', l10n.scanFurnitureDiningChair),
+    _ScanChoice('dining_table', l10n.scanFurnitureDiningTable),
     _ScanChoice('coffee_table', l10n.scanFurnitureCoffeeTable),
-    _ScanChoice('carpet', l10n.scanFurnitureRug),
+    _ScanChoice('side_table', l10n.scanFurnitureSideTable),
+    _ScanChoice('console_table', l10n.scanFurnitureConsoleTable),
     _ScanChoice('tv_unit', l10n.scanFurnitureTvUnit),
-    _ScanChoice('storage', l10n.scanFurnitureStorage),
-    _ScanChoice('lighting', l10n.scanFurnitureLighting),
+    _ScanChoice('bed', l10n.scanFurnitureBed),
+    _ScanChoice('wardrobe', l10n.scanFurnitureWardrobe),
+    _ScanChoice('dresser', l10n.scanFurnitureDresser),
+    _ScanChoice('nightstand', l10n.scanFurnitureNightstand),
+    _ScanChoice('bookshelf', l10n.scanFurnitureBookshelf),
+    _ScanChoice('desk', l10n.scanFurnitureDesk),
+    _ScanChoice('office_chair', l10n.scanFurnitureOfficeChair),
+    _ScanChoice('lamp', l10n.scanFurnitureLamp),
+    _ScanChoice('floor_lamp', l10n.scanFurnitureFloorLamp),
+    _ScanChoice('pendant_lamp', l10n.scanFurniturePendantLamp),
+    _ScanChoice('rug', l10n.scanFurnitureRug),
+    _ScanChoice('curtain', l10n.scanFurnitureCurtain),
+    _ScanChoice('mirror', l10n.scanFurnitureMirror),
+    _ScanChoice('wall_art', l10n.scanFurnitureWallArt),
+    _ScanChoice('plant_pot', l10n.scanFurniturePlantPot),
+    _ScanChoice('decoration', l10n.scanFurnitureDecoration),
+    _ScanChoice('storage_unit', l10n.scanFurnitureStorage),
   ];
 
   List<_ScanChoice> _styleChoices(AppLocalizations l10n) => [
@@ -532,25 +741,28 @@ class _ScanPageState extends State<ScanPage> {
     _ScanChoice('glass', l10n.scanMaterialGlass),
   ];
 
-  List<_ScanChoice> _colorChoices(AppLocalizations l10n) => [
-    _ScanChoice('beige', l10n.scanColorBeige),
-    _ScanChoice('oak', l10n.scanColorOak),
-    _ScanChoice('white', l10n.scanColorWhite),
-    _ScanChoice('gray', l10n.scanColorGray),
-    _ScanChoice('green', l10n.scanColorGreen),
-  ];
-
   List<_ScanChoice> _temperatureChoices(AppLocalizations l10n) => [
     _ScanChoice('warm', l10n.scanTemperatureWarm),
     _ScanChoice('neutral', l10n.scanTemperatureNeutral),
     _ScanChoice('cold', l10n.scanTemperatureCool),
   ];
 
-  List<_ScanChoice> _sizeChoices(AppLocalizations l10n) => [
-    _ScanChoice('small', l10n.scanSizeSmall),
-    _ScanChoice('medium', l10n.scanSizeMedium),
-    _ScanChoice('large', l10n.scanSizeLarge),
-  ];
+  Map<String, String> _colorNameChoices(AppLocalizations l10n) => {
+    'white': l10n.scanColorWhite,
+    'black': l10n.scanColorBlack,
+    'gray': l10n.scanColorGray,
+    'beige': l10n.scanColorBeige,
+    'cream': l10n.scanColorCream,
+    'brown': l10n.scanColorBrown,
+    'red': l10n.scanColorRed,
+    'orange': l10n.scanColorOrange,
+    'yellow': l10n.scanColorYellow,
+    'green': l10n.scanColorGreen,
+    'blue': l10n.scanColorBlue,
+    'purple': l10n.scanColorPurple,
+    'pink': l10n.scanColorPink,
+    'multicolor': l10n.scanColorMulticolor,
+  };
 }
 
 class _ScanChoice {
@@ -565,16 +777,19 @@ class _DimensionField extends StatelessWidget {
     required this.controller,
     required this.label,
     required this.suffix,
+    required this.onChanged,
   });
 
   final TextEditingController controller;
   final String label;
   final String suffix;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      onChanged: onChanged,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       decoration: InputDecoration(
         labelText: label,

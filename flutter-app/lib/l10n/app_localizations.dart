@@ -1148,12 +1148,6 @@ abstract class AppLocalizations {
   /// **'Tap to view your personalized furniture suggestions.'**
   String get notificationDesignReadyBody;
 
-  /// No description provided for @backendUrlLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Server URL'**
-  String get backendUrlLabel;
-
   /// Android notification channel name for completed AI design notifications.
   ///
   /// In en, this message translates to:
@@ -1175,25 +1169,25 @@ abstract class AppLocalizations {
   /// No description provided for @scanPreferencesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Room dimensions and optional style choices are sent to the AI backend with your photo.'**
+  /// **'Optional room dimensions and style choices are sent to the AI backend with your photo.'**
   String get scanPreferencesSubtitle;
 
   /// No description provided for @scanRoomWidthLabel.
   ///
   /// In en, this message translates to:
-  /// **'Wall'**
+  /// **'Length'**
   String get scanRoomWidthLabel;
 
   /// No description provided for @scanRoomDepthLabel.
   ///
   /// In en, this message translates to:
-  /// **'Depth'**
+  /// **'Width'**
   String get scanRoomDepthLabel;
 
   /// No description provided for @scanCeilingHeightLabel.
   ///
   /// In en, this message translates to:
-  /// **'Ceiling'**
+  /// **'Height'**
   String get scanCeilingHeightLabel;
 
   /// No description provided for @scanCentimetersSuffix.
@@ -1243,24 +1237,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mood'**
   String get scanTemperatureLabel;
-
-  /// No description provided for @scanSizeLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Size'**
-  String get scanSizeLabel;
-
-  /// No description provided for @scanExtraPreferencesLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Notes'**
-  String get scanExtraPreferencesLabel;
-
-  /// No description provided for @scanExtraPreferencesHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Budget, must-keep pieces, color details...'**
-  String get scanExtraPreferencesHint;
 
   /// No description provided for @scanFurnitureSofa.
   ///
@@ -1418,18 +1394,6 @@ abstract class AppLocalizations {
   /// **'Large'**
   String get scanSizeLarge;
 
-  /// No description provided for @backendUrlSaveTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Save server URL'**
-  String get backendUrlSaveTooltip;
-
-  /// No description provided for @backendUrlSaved.
-  ///
-  /// In en, this message translates to:
-  /// **'Server URL saved.'**
-  String get backendUrlSaved;
-
   /// No description provided for @profileFirebaseUnavailable.
   ///
   /// In en, this message translates to:
@@ -1447,6 +1411,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} products suggested'**
   String designProductCount(int count);
+
+  /// No description provided for @scanPreferencesCollapsedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to add optional dimensions, furniture, style, color, and mood.'**
+  String get scanPreferencesCollapsedSubtitle;
+
+  /// No description provided for @scanRoomDimensionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Room dimensions'**
+  String get scanRoomDimensionsLabel;
+
+  /// No description provided for @scanAutoDesignCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 design will be generated because custom parameters are set.} other{3 designs will be generated when no custom parameters are set.}}'**
+  String scanAutoDesignCount(int count);
+
+  /// No description provided for @scanFurnitureVisibleCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} shown'**
+  String scanFurnitureVisibleCount(int count);
+
+  /// No description provided for @scanNoColorSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No color selected'**
+  String get scanNoColorSelected;
+
+  /// No description provided for @scanSelectedColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected: {color}'**
+  String scanSelectedColor(String color);
+
+  /// No description provided for @scanClearColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get scanClearColor;
+
+  /// No description provided for @scanHueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Hue'**
+  String get scanHueLabel;
+
+  /// No description provided for @scanSaturationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturation'**
+  String get scanSaturationLabel;
+
+  /// No description provided for @scanLightnessLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Lightness'**
+  String get scanLightnessLabel;
+
+  /// No description provided for @scanFurnitureChair.
+  ///
+  /// In en, this message translates to:
+  /// **'Chair'**
+  String get scanFurnitureChair;
+
+  /// No description provided for @scanFurnitureDiningChair.
+  ///
+  /// In en, this message translates to:
+  /// **'Dining chair'**
+  String get scanFurnitureDiningChair;
+
+  /// No description provided for @scanFurnitureDiningTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Dining table'**
+  String get scanFurnitureDiningTable;
+
+  /// No description provided for @scanFurnitureSideTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Side table'**
+  String get scanFurnitureSideTable;
+
+  /// No description provided for @scanFurnitureConsoleTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Console table'**
+  String get scanFurnitureConsoleTable;
+
+  /// No description provided for @scanFurnitureBed.
+  ///
+  /// In en, this message translates to:
+  /// **'Bed'**
+  String get scanFurnitureBed;
+
+  /// No description provided for @scanFurnitureWardrobe.
+  ///
+  /// In en, this message translates to:
+  /// **'Wardrobe'**
+  String get scanFurnitureWardrobe;
+
+  /// No description provided for @scanFurnitureDresser.
+  ///
+  /// In en, this message translates to:
+  /// **'Dresser'**
+  String get scanFurnitureDresser;
+
+  /// No description provided for @scanFurnitureNightstand.
+  ///
+  /// In en, this message translates to:
+  /// **'Nightstand'**
+  String get scanFurnitureNightstand;
+
+  /// No description provided for @scanFurnitureBookshelf.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookshelf'**
+  String get scanFurnitureBookshelf;
+
+  /// No description provided for @scanFurnitureDesk.
+  ///
+  /// In en, this message translates to:
+  /// **'Desk'**
+  String get scanFurnitureDesk;
+
+  /// No description provided for @scanFurnitureOfficeChair.
+  ///
+  /// In en, this message translates to:
+  /// **'Office chair'**
+  String get scanFurnitureOfficeChair;
+
+  /// No description provided for @scanFurnitureLamp.
+  ///
+  /// In en, this message translates to:
+  /// **'Lamp'**
+  String get scanFurnitureLamp;
+
+  /// No description provided for @scanFurnitureFloorLamp.
+  ///
+  /// In en, this message translates to:
+  /// **'Floor lamp'**
+  String get scanFurnitureFloorLamp;
+
+  /// No description provided for @scanFurniturePendantLamp.
+  ///
+  /// In en, this message translates to:
+  /// **'Pendant lamp'**
+  String get scanFurniturePendantLamp;
+
+  /// No description provided for @scanFurnitureCurtain.
+  ///
+  /// In en, this message translates to:
+  /// **'Curtain'**
+  String get scanFurnitureCurtain;
+
+  /// No description provided for @scanFurnitureMirror.
+  ///
+  /// In en, this message translates to:
+  /// **'Mirror'**
+  String get scanFurnitureMirror;
+
+  /// No description provided for @scanFurnitureWallArt.
+  ///
+  /// In en, this message translates to:
+  /// **'Wall art'**
+  String get scanFurnitureWallArt;
+
+  /// No description provided for @scanFurniturePlantPot.
+  ///
+  /// In en, this message translates to:
+  /// **'Plant pot'**
+  String get scanFurniturePlantPot;
+
+  /// No description provided for @scanFurnitureDecoration.
+  ///
+  /// In en, this message translates to:
+  /// **'Decoration'**
+  String get scanFurnitureDecoration;
+
+  /// No description provided for @scanColorBlack.
+  ///
+  /// In en, this message translates to:
+  /// **'Black'**
+  String get scanColorBlack;
+
+  /// No description provided for @scanColorCream.
+  ///
+  /// In en, this message translates to:
+  /// **'Cream'**
+  String get scanColorCream;
+
+  /// No description provided for @scanColorBrown.
+  ///
+  /// In en, this message translates to:
+  /// **'Brown'**
+  String get scanColorBrown;
+
+  /// No description provided for @scanColorRed.
+  ///
+  /// In en, this message translates to:
+  /// **'Red'**
+  String get scanColorRed;
+
+  /// No description provided for @scanColorOrange.
+  ///
+  /// In en, this message translates to:
+  /// **'Orange'**
+  String get scanColorOrange;
+
+  /// No description provided for @scanColorYellow.
+  ///
+  /// In en, this message translates to:
+  /// **'Yellow'**
+  String get scanColorYellow;
+
+  /// No description provided for @scanColorBlue.
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get scanColorBlue;
+
+  /// No description provided for @scanColorPurple.
+  ///
+  /// In en, this message translates to:
+  /// **'Purple'**
+  String get scanColorPurple;
+
+  /// No description provided for @scanColorPink.
+  ///
+  /// In en, this message translates to:
+  /// **'Pink'**
+  String get scanColorPink;
+
+  /// No description provided for @scanColorMulticolor.
+  ///
+  /// In en, this message translates to:
+  /// **'Multicolor'**
+  String get scanColorMulticolor;
 }
 
 class _AppLocalizationsDelegate

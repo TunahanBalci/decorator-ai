@@ -52,6 +52,19 @@ def build_filter_payload(intent: ProductRetrievalIntent) -> dict:
             payload["must"].append({"key": field, "match": {"any": values}})
     if intent.temperature:
         payload["must"].append({"key": "temperature", "match": {"value": intent.temperature}})
+    dimension_filters = (
+        ("width_cm", intent.min_width_cm, intent.max_width_cm),
+        ("depth_cm", intent.min_depth_cm, intent.max_depth_cm),
+        ("height_cm", intent.min_height_cm, intent.max_height_cm),
+    )
+    for field, minimum, maximum in dimension_filters:
+        range_filter = {}
+        if minimum is not None:
+            range_filter["gte"] = minimum
+        if maximum is not None:
+            range_filter["lte"] = maximum
+        if range_filter:
+            payload["must"].append({"key": field, "range": range_filter})
     return payload
 
 
@@ -113,20 +126,22 @@ def _hybrid_search(
         raise RuntimeError("Failed to embed query text")
     text_query_vector = query_text_vectors[0]
 
-    text_results = qdrant.search(
+    text_results = qdrant.query_points(
         collection_name=settings.qdrant_collection_products,
-        query_vector=models.NamedVector(name="text", vector=text_query_vector),
+        query=text_query_vector,
+        using="text",
         query_filter=models.Filter(**filter_payload),
         limit=limit,
-    )
+    ).points
 
     if not text_results:
         # Retry without filters
-        text_results = qdrant.search(
+        text_results = qdrant.query_points(
             collection_name=settings.qdrant_collection_products,
-            query_vector=models.NamedVector(name="text", vector=text_query_vector),
+            query=text_query_vector,
+            using="text",
             limit=limit,
-        )
+        ).points
 
     # Build text scores map
     text_scores: dict[str, float] = {}
@@ -191,19 +206,21 @@ def _image_search(
         dimension=settings.qdrant_image_vector_size,
     )
 
-    results = qdrant.search(
+    results = qdrant.query_points(
         collection_name=settings.qdrant_collection_products,
-        query_vector=models.NamedVector(name="image", vector=image_vector),
+        query=image_vector,
+        using="image",
         query_filter=models.Filter(**filter_payload),
         limit=limit,
-    )
+    ).points
 
     if not results:
-        results = qdrant.search(
+        results = qdrant.query_points(
             collection_name=settings.qdrant_collection_products,
-            query_vector=models.NamedVector(name="image", vector=image_vector),
+            query=image_vector,
+            using="image",
             limit=limit,
-        )
+        ).points
 
     scores: dict[str, float] = {}
     for hit in results:

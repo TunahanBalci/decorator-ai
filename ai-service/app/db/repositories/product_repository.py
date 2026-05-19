@@ -94,6 +94,12 @@ class ProductRepository:
             conditions.append(or_(Product.colors.overlap(intent.colors), Product.colors.is_(None)))
         if intent.room_types:
             conditions.append(or_(Product.room_types.overlap(intent.room_types), Product.room_types.is_(None)))
+        if intent.min_width_cm:
+            conditions.append(or_(Product.width_cm >= intent.min_width_cm, Product.width_cm.is_(None)))
+        if intent.min_depth_cm:
+            conditions.append(or_(Product.depth_cm >= intent.min_depth_cm, Product.depth_cm.is_(None)))
+        if intent.min_height_cm:
+            conditions.append(or_(Product.height_cm >= intent.min_height_cm, Product.height_cm.is_(None)))
         if intent.max_width_cm:
             conditions.append(or_(Product.width_cm <= intent.max_width_cm, Product.width_cm.is_(None)))
         if intent.max_depth_cm:

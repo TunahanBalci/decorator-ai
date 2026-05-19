@@ -594,9 +594,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Kişiselleştirilmiş mobilya önerilerinizi görmek için dokunun.';
 
   @override
-  String get backendUrlLabel => 'Sunucu URL\'si';
-
-  @override
   String get notificationDesignChannelName => 'Tasarım AI Güncellemeleri';
 
   @override
@@ -608,16 +605,16 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get scanPreferencesSubtitle =>
-      'Oda ölçüleri ve isteğe bağlı stil seçimleri fotoğrafınla birlikte AI backend’e gönderilir.';
+      'İsteğe bağlı oda ölçüleri ve stil seçimleri fotoğrafınla birlikte AI backend’e gönderilir.';
 
   @override
-  String get scanRoomWidthLabel => 'Duvar';
+  String get scanRoomWidthLabel => 'Uzunluk';
 
   @override
-  String get scanRoomDepthLabel => 'Derinlik';
+  String get scanRoomDepthLabel => 'Genişlik';
 
   @override
-  String get scanCeilingHeightLabel => 'Tavan';
+  String get scanCeilingHeightLabel => 'Yükseklik';
 
   @override
   String get scanCentimetersSuffix => 'cm';
@@ -642,16 +639,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get scanTemperatureLabel => 'Atmosfer';
-
-  @override
-  String get scanSizeLabel => 'Boyut';
-
-  @override
-  String get scanExtraPreferencesLabel => 'Notlar';
-
-  @override
-  String get scanExtraPreferencesHint =>
-      'Bütçe, kalacak parçalar, renk detayları...';
 
   @override
   String get scanFurnitureSofa => 'Koltuk';
@@ -732,12 +719,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scanSizeLarge => 'Büyük';
 
   @override
-  String get backendUrlSaveTooltip => 'Sunucu URL’sini kaydet';
-
-  @override
-  String get backendUrlSaved => 'Sunucu URL’si kaydedildi.';
-
-  @override
   String get profileFirebaseUnavailable =>
       'Firebase bu platform için henüz yapılandırılmadı.';
 
@@ -748,4 +729,137 @@ class AppLocalizationsTr extends AppLocalizations {
   String designProductCount(int count) {
     return '$count ürün önerildi';
   }
+
+  @override
+  String get scanPreferencesCollapsedSubtitle =>
+      'İsteğe bağlı ölçü, mobilya, stil, renk ve ruh hali eklemek için dokun.';
+
+  @override
+  String get scanRoomDimensionsLabel => 'Oda ölçüleri';
+
+  @override
+  String scanAutoDesignCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Özel parametre girilmezse 3 tasarım üretilecek.',
+      one: 'Özel parametre girildiği için 1 tasarım üretilecek.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String scanFurnitureVisibleCount(int count) {
+    return '$count gösteriliyor';
+  }
+
+  @override
+  String get scanNoColorSelected => 'Renk seçilmedi';
+
+  @override
+  String scanSelectedColor(String color) {
+    return 'Seçili: $color';
+  }
+
+  @override
+  String get scanClearColor => 'Temizle';
+
+  @override
+  String get scanHueLabel => 'Ton';
+
+  @override
+  String get scanSaturationLabel => 'Doygunluk';
+
+  @override
+  String get scanLightnessLabel => 'Açıklık';
+
+  @override
+  String get scanFurnitureChair => 'Sandalye';
+
+  @override
+  String get scanFurnitureDiningChair => 'Yemek sandalyesi';
+
+  @override
+  String get scanFurnitureDiningTable => 'Yemek masası';
+
+  @override
+  String get scanFurnitureSideTable => 'Yan sehpa';
+
+  @override
+  String get scanFurnitureConsoleTable => 'Konsol';
+
+  @override
+  String get scanFurnitureBed => 'Yatak';
+
+  @override
+  String get scanFurnitureWardrobe => 'Gardırop';
+
+  @override
+  String get scanFurnitureDresser => 'Şifonyer';
+
+  @override
+  String get scanFurnitureNightstand => 'Komodin';
+
+  @override
+  String get scanFurnitureBookshelf => 'Kitaplık';
+
+  @override
+  String get scanFurnitureDesk => 'Çalışma masası';
+
+  @override
+  String get scanFurnitureOfficeChair => 'Ofis sandalyesi';
+
+  @override
+  String get scanFurnitureLamp => 'Lamba';
+
+  @override
+  String get scanFurnitureFloorLamp => 'Lambader';
+
+  @override
+  String get scanFurniturePendantLamp => 'Sarkıt lamba';
+
+  @override
+  String get scanFurnitureCurtain => 'Perde';
+
+  @override
+  String get scanFurnitureMirror => 'Ayna';
+
+  @override
+  String get scanFurnitureWallArt => 'Duvar sanatı';
+
+  @override
+  String get scanFurniturePlantPot => 'Saksı';
+
+  @override
+  String get scanFurnitureDecoration => 'Dekorasyon';
+
+  @override
+  String get scanColorBlack => 'Siyah';
+
+  @override
+  String get scanColorCream => 'Krem';
+
+  @override
+  String get scanColorBrown => 'Kahverengi';
+
+  @override
+  String get scanColorRed => 'Kırmızı';
+
+  @override
+  String get scanColorOrange => 'Turuncu';
+
+  @override
+  String get scanColorYellow => 'Sarı';
+
+  @override
+  String get scanColorBlue => 'Mavi';
+
+  @override
+  String get scanColorPurple => 'Mor';
+
+  @override
+  String get scanColorPink => 'Pembe';
+
+  @override
+  String get scanColorMulticolor => 'Çok renkli';
 }
