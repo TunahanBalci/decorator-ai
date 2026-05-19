@@ -29,14 +29,19 @@ service cloud.firestore {
     }
 
     match /generatedDesigns/{designId} {
-      allow read: if request.auth != null
+      allow read, delete: if request.auth != null
         && resource.data.ownerUid == request.auth.uid;
-      allow write: if false;
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if request.auth != null
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid;
 
       match /products/{productId} {
         allow read: if request.auth != null
           && get(/databases/$(database)/documents/generatedDesigns/$(designId)).data.ownerUid == request.auth.uid;
-        allow write: if false;
+        allow write: if request.auth != null
+          && getAfter(/databases/$(database)/documents/generatedDesigns/$(designId)).data.ownerUid == request.auth.uid;
       }
     }
 

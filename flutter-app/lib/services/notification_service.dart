@@ -55,6 +55,13 @@ class NotificationService {
       settings: initializationSettings,
       onDidReceiveNotificationResponse: _handleNotificationResponse,
     );
+    final launchDetails = await _localNotifications
+        .getNotificationAppLaunchDetails();
+    final launchResponse = launchDetails?.notificationResponse;
+    if (launchDetails?.didNotificationLaunchApp == true &&
+        launchResponse != null) {
+      _handleNotificationResponse(launchResponse);
+    }
 
     if (!enableRemoteNotifications) return;
 

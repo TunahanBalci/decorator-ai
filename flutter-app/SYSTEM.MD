@@ -141,7 +141,7 @@ Firestore collections:
 
 `scans` documents use `localScanId`, `status`, and `createdAt`.
 
-`generatedDesigns` documents use `ownerUid`, `title`, `spaceType`, `style`, `imageUrl`, and `createdAt`. Its `products` subcollection uses the same product fields as curated design project products.
+`generatedDesigns` documents use `ownerUid`, `title`, `spaceType`, `style`, `imageUrl`, `productCount`, `createdAt`, and `updatedAt`. Its `products` subcollection uses the same product fields as curated design project products plus `sortOrder`. The Flutter client writes these documents after a backend scan completes; if no Firebase user exists, it signs in anonymously and uses that UID as `ownerUid`. Firebase Anonymous Auth must be enabled for guest-generated designs to persist.
 
 Deploy Firestore rules and indexes with:
 
@@ -160,7 +160,7 @@ Backend scan behavior rules:
 - Do not put privileged AI provider credentials, server-only prompts, billing logic, or trusted moderation decisions in the Flutter client.
 - Model server responses with typed DTOs or domain mapping in the service layer.
 - Keep UI states explicit: loading/progress, success, empty, recoverable error, and permission error where relevant.
-- Trigger `AppNotificationService.addAiDesignReady(designId: project.id)` and a local notification with payload `generated_design:{designId}` after a backend design job completes, even if the processing page is no longer mounted. FCM design-ready notifications should include one of `designId`, `generatedDesignId`, `design_id`, or `projectId` in their data payload so taps can open `DesignDetailPage` from Firestore.
+- After a backend design job completes, write the mapped `DesignProject` to Firestore through `GeneratedDesignsRepository.saveGeneratedDesign()`, then trigger `AppNotificationService.addAiDesignReady(designId: persistedDesignId)` and a local notification with payload `generated_design:{persistedDesignId}`. FCM design-ready notifications should include one of `designId`, `generatedDesignId`, `design_id`, or `projectId` in their data payload so taps can open `DesignDetailPage` from Firestore.
 - Add tests around service behavior or widget behavior using fakes.
 
 If Cloud Functions are added later:
@@ -284,7 +284,7 @@ Onboarding state uses the `redux` package:
 
 - `IndexedStack` to preserve tab page state.
 - Dark floating bottom navigation with selected white pill.
-- Four tabs: Home, Scan, Saved/Favorites, Profile. Favorites has a separate furniture favorites mode and generated AI designs mode.
+- Four tabs: Home, Scan, Saved/Favorites, Profile. Favorites has a separate furniture favorites mode and generated AI designs mode. Product favorites are stored through `ProductFavoriteService` so product detail pages opened from Home, Favorites, or generated designs all use the same heart control.
 
 Any new tab content must leave enough bottom padding for the floating nav.
 

@@ -6,6 +6,7 @@ import '../../core/widgets/remote_image.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/product_spot.dart';
 import '../../models/store_offer.dart';
+import '../../services/product_favorite_service.dart';
 
 String normalizeStoreName({
   required String storeName,
@@ -127,10 +128,37 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   void _handleToggleFavorite() {
-    setState(() {
-      _isFavorite = !_isFavorite;
-    });
-    widget.onToggleFavorite?.call();
+    if (widget.onToggleFavorite != null) {
+      setState(() {
+        _isFavorite = !_isFavorite;
+      });
+      widget.onToggleFavorite?.call();
+      return;
+    }
+
+    ProductFavoriteService.instance
+        .toggleFavorite(widget.product.id, itemName: widget.product.name)
+        .then((isFavorite) {
+          if (!mounted) return;
+          setState(() {
+            _isFavorite = isFavorite;
+          });
+        });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.onToggleFavorite == null) {
+      ProductFavoriteService.instance.isFavorite(widget.product.id).then((
+        isFavorite,
+      ) {
+        if (!mounted) return;
+        setState(() {
+          _isFavorite = isFavorite;
+        });
+      });
+    }
   }
 
   @override
@@ -158,9 +186,22 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   borderRadius: BorderRadius.circular(24),
                   child: AspectRatio(
                     aspectRatio: 1.55,
-                    child: DecoratedBox(
-                      decoration: const BoxDecoration(color: AppColors.surface),
-                      child: RemoteImage(url: widget.product.imageUrl),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        const DecoratedBox(
+                          decoration: BoxDecoration(color: AppColors.surface),
+                        ),
+                        RemoteImage(url: widget.product.imageUrl),
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: _ProductFavoriteButton(
+                            isFavorite: _isFavorite,
+                            onPressed: _handleToggleFavorite,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -272,12 +313,9 @@ class _ProductHeader extends StatelessWidget {
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
           ),
-          Align(
+          const Align(
             alignment: Alignment.centerRight,
-            child: _ProductFavoriteButton(
-              isFavorite: isFavorite,
-              onPressed: onToggleFavorite,
-            ),
+            child: SizedBox(width: 48, height: 48),
           ),
         ],
       ),

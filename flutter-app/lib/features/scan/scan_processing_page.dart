@@ -9,6 +9,7 @@ import '../../l10n/app_localizations.dart';
 import '../../services/ai_backend_client.dart';
 import '../../services/app_notification_service.dart';
 import '../../services/decorator_ai_api.dart';
+import '../../services/generated_designs_repository.dart';
 import '../../services/notification_service.dart';
 import '../design/design_detail_page.dart';
 
@@ -81,10 +82,16 @@ class _ScanProcessingPageState extends State<ScanProcessingPage>
         onProgress: _onProgress,
       );
 
+      final persistedDesignId =
+          await GeneratedDesignsRepository().saveGeneratedDesign(project) ??
+          project.id;
       await AppNotificationService.instance.addAiDesignReady(
-        designId: project.id,
+        designId: persistedDesignId,
       );
-      await _showLocalNotification(notificationText, designId: project.id);
+      await _showLocalNotification(
+        notificationText,
+        designId: persistedDesignId,
+      );
 
       if (!mounted) return;
 

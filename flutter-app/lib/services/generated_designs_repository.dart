@@ -46,6 +46,45 @@ class GeneratedDesignsRepository {
     }
   }
 
+  Future<String?> saveGeneratedDesign(DesignProject project) async {
+    final firestore = _firestore;
+    final user = await _ensureUser();
+    if (firestore == null || user == null || project.id.trim().isEmpty) {
+      return null;
+    }
+
+    final doc = firestore.collection('generatedDesigns').doc(project.id.trim());
+
+    try {
+      final batch = firestore.batch();
+      batch.set(doc, {
+        'ownerUid': user.uid,
+        'title': project.title,
+        'spaceType': project.spaceType,
+        'style': project.style,
+        'imageUrl': project.imageUrl,
+        'productCount': project.products.length,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      for (var index = 0; index < project.products.length; index += 1) {
+        final product = project.products[index];
+        batch.set(doc.collection('products').doc(product.id), {
+          ...product.toMap(),
+          'sortOrder': index,
+        });
+      }
+
+      await batch.commit();
+      return doc.id;
+    } on FirebaseException catch (error, stackTrace) {
+      debugPrint('Generated design save failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      return null;
+    }
+  }
+
   Future<DesignProject?> fetchGeneratedDesign(String designId) async {
     final firestore = _firestore;
     final user = _currentUser();
@@ -92,5 +131,19 @@ class GeneratedDesignsRepository {
       debugPrintStack(stackTrace: stackTrace);
     }
     return null;
+  }
+
+  Future<User?> _ensureUser() async {
+    try {
+      if (Firebase.apps.isEmpty) return null;
+      final auth = FirebaseAuth.instance;
+      if (auth.currentUser != null) return auth.currentUser;
+      final credential = await auth.signInAnonymously();
+      return credential.user;
+    } catch (error, stackTrace) {
+      debugPrint('Generated design auth failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      return null;
+    }
   }
 }

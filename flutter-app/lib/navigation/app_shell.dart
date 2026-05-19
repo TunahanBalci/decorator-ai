@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/theme/app_colors.dart';
-import '../data/sample_furniture.dart';
 import '../features/favorites/favorites_page.dart';
 import '../features/home/home_page.dart';
 import '../features/profile/profile_page.dart';
@@ -10,6 +9,7 @@ import '../features/scan/scan_page.dart';
 import '../l10n/app_localizations.dart';
 import '../services/app_notification_service.dart';
 import '../services/decorator_ai_api.dart';
+import '../services/product_favorite_service.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({this.initialIndex = 0, this.homeApi, super.key});
@@ -25,8 +25,6 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  static const _favoriteFurnitureKey = 'favorite_furniture_ids';
-
   late int _index;
   Set<String> _favoriteFurnitureIds = <String>{};
 
@@ -40,19 +38,12 @@ class _AppShellState extends State<AppShell> {
   }
 
   Future<void> _loadFurnitureState() async {
-    final prefs = await SharedPreferences.getInstance();
+    final favorites = await ProductFavoriteService.instance.loadFavorites();
     if (!mounted) return;
 
     setState(() {
-      _favoriteFurnitureIds =
-          (prefs.getStringList(_favoriteFurnitureKey) ?? const <String>[])
-              .toSet();
+      _favoriteFurnitureIds = favorites;
     });
-  }
-
-  Future<void> _persistSet(String key, Set<String> values) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(key, values.toList()..sort());
   }
 
   Future<void> _persistSelectedIndex(int index) async {
@@ -67,29 +58,13 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _toggleFavorite(String furnitureId) {
-    final wasFavorite = _favoriteFurnitureIds.contains(furnitureId);
-    setState(() {
-      if (wasFavorite) {
-        _favoriteFurnitureIds.remove(furnitureId);
-      } else {
-        _favoriteFurnitureIds.add(furnitureId);
-      }
+    ProductFavoriteService.instance.toggleFavorite(furnitureId).then((_) {
+      if (!mounted) return;
+      setState(() {
+        _favoriteFurnitureIds =
+            ProductFavoriteService.instance.favoriteIds.value;
+      });
     });
-    _persistSet(_favoriteFurnitureKey, _favoriteFurnitureIds);
-    String? itemName;
-    for (final item in sampleFurniture) {
-      if (item.id == furnitureId) {
-        itemName = item.title;
-        break;
-      }
-    }
-    if (itemName != null) {
-      if (wasFavorite) {
-        AppNotificationService.instance.addFavoriteRemoved(itemName);
-      } else {
-        AppNotificationService.instance.addFavoriteAdded(itemName);
-      }
-    }
   }
 
   @override

@@ -289,10 +289,10 @@ Uygulama içinden Profile ekranındaki Server URL alanı ile URL geçici veya ka
 - `DecoratorAiApi`: UI'nın kullandığı soyut API sınırı.
 - `BackendDecoratorAiApi`: `ai-service` REST API'sini kullanır.
 - `FirestoreDecoratorAiApi`: Curated Home verisi için Firestore okur, hata/boş durumda mock'a düşer.
-- `GeneratedDesignsRepository`: Kullanıcının Firestore `generatedDesigns` koleksiyonundaki AI tasarım önerilerini Favorites ekranında ve bildirim yönlendirmelerinde okur.
+- `GeneratedDesignsRepository`: Kullanıcının Firestore `generatedDesigns` koleksiyonundaki AI tasarım önerilerini Favorites ekranında ve bildirim yönlendirmelerinde okur/yazar. Giriş yapmamış kullanıcı için Firebase Anonymous Auth ile UID oluşturulur.
 - `MockDecoratorAiApi`: Test ve offline geliştirme için statik veri döner.
 - `AiBackendClient`: Upload, job create, job poll ve backend image URL dönüştürme işlemlerini yapar.
-- `NotificationService`: Local notification, FCM foreground notification ve tasarım bildiriminden `DesignDetailPage` yönlendirme altyapısı. Tasarım bildirim data payload'ı `designId`, `generatedDesignId`, `design_id` veya `projectId` taşımalıdır.
+- `NotificationService`: Local notification, FCM foreground/background/launch notification ve tasarım bildiriminden `DesignDetailPage` yönlendirme altyapısı. Tasarım bildirim data payload'ı `designId`, `generatedDesignId`, `design_id` veya `projectId` taşımalıdır.
 - `AppNotificationService`: Uygulama içi bildirim listesi ve okunmamış sayaç yönetimi.
 
 ### 5.4 Lokalizasyon
@@ -608,6 +608,7 @@ Firebase projesinde şunları açın:
 
 - Firestore Database
 - Authentication > Google provider
+- Authentication > Anonymous provider (misafir kullanıcının AI tasarımlarını `generatedDesigns` altında saklamak için)
 - Cloud Messaging
 
 Flutter yapılandırması için:
@@ -625,7 +626,7 @@ Firestore rules ve indexes deploy etmek için:
 firebase deploy --only firestore
 ```
 
-Seed verileri yüklemek için `flutter-app/firestore_seed/README.md` içeriğini takip edin veya Firebase Console üzerinden `designProjects` ve alt `products` koleksiyonlarını elle oluşturun. Kullanıcıya özel AI tasarım sonuçları `generatedDesigns/{designId}` altında `ownerUid`, `title`, `spaceType`, `style`, `imageUrl`, `createdAt` ve alt `products` koleksiyonu ile saklanır.
+Seed verileri yüklemek için `flutter-app/firestore_seed/README.md` içeriğini takip edin veya Firebase Console üzerinden `designProjects` ve alt `products` koleksiyonlarını elle oluşturun. Kullanıcıya özel AI tasarım sonuçları `generatedDesigns/{designId}` altında `ownerUid`, `title`, `spaceType`, `style`, `imageUrl`, `productCount`, `createdAt`, `updatedAt` ve alt `products` koleksiyonu ile saklanır. Flutter tarama akışı backend sonucu tamamlandığında bu kaydı oluşturur; bildirim payload'ı aynı `designId` değerini taşıdığı için bildirime dokununca ilgili tasarım açılır.
 
 ### 7.10 Flutter Uygulamasını Kurun ve Çalıştırın
 

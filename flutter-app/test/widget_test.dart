@@ -18,6 +18,7 @@ import 'package:decorator_ai/navigation/app_shell.dart';
 import 'package:decorator_ai/services/app_notification_service.dart';
 import 'package:decorator_ai/services/ai_backend_client.dart';
 import 'package:decorator_ai/services/decorator_ai_api.dart';
+import 'package:decorator_ai/services/product_favorite_service.dart';
 
 void main() {
   test('scan design options serialize backend request fields', () {
@@ -150,6 +151,47 @@ void main() {
     expect(find.text('IKEA'), findsWidgets);
     expect(find.text('floor_lamp'), findsNothing);
   });
+
+  testWidgets(
+    'product detail heart favorite button persists without parent callback',
+    (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({});
+      const product = ProductSpot(
+        id: 'ai-product-1',
+        name: 'AI Matched Chair',
+        brand: 'Matched product',
+        price: '900 TL',
+        matchScore: 87,
+        left: 0.5,
+        top: 0.5,
+        imageUrl: 'https://example.com/chair.jpg',
+        buyUrl: 'https://example.com/chair',
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: ProductDetailPage(product: product),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byIcon(Icons.favorite_border_rounded), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.favorite_border_rounded));
+      await tester.pump();
+      await tester.pump();
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(
+        prefs.getStringList(ProductFavoriteService.storageKey),
+        contains('ai-product-1'),
+      );
+      expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+    },
+  );
 
   testWidgets('decorator_ai welcome screen loads', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
