@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.core.errors import PlacementValidationError
 from app.db.repositories.design_job_repository import DesignJobRepository
 from app.workflow.nodes.helpers import progress
 from app.workflow.state import DesignWorkflowState
@@ -17,6 +18,8 @@ def persist_result_node(db: Session):
             design_index = int(strategy["design_index"])
             products = [p for p in selected if int(p["design_index"]) == design_index]
             generated_image = generated_by_index.get(design_index)
+            if not products or not generated_image or not generated_image.get("path"):
+                continue
             final_designs.append(
                 {
                     "design_index": design_index,
@@ -24,14 +27,14 @@ def persist_result_node(db: Session):
                     "style": strategy.get("style"),
                     "summary": strategy.get("notes")
                     or "Generated from selected catalog products and placement metadata.",
-                    "generated_image_path": (
-                        generated_image.get("path") if generated_image else None
-                    ),
+                    "generated_image_path": generated_image.get("path"),
                     "generated_image": generated_image,
                     "placement_debug": state.get("placement_debug"),
                     "products": products,
                 }
             )
+        if not final_designs:
+            raise PlacementValidationError("No non-empty design suggestion was produced")
         job = DesignJobRepository(db).get(state["job_id"])
         if job:
             job.workflow_state = {

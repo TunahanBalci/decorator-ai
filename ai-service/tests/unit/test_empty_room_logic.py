@@ -85,8 +85,12 @@ def test_validate_result_rejects_invented_product() -> None:
                 node(
                     {
                         "job_id": str(uuid4()),
+                        "generated_images": [
+                            {"design_index": 1, "path": "generated/job/design.png"}
+                        ],
                         "selected_products": [
                             {
+                                "design_index": 1,
                                 "product_id": str(product_id),
                                 "name": "Invented Sofa",
                                 "role": "sofa",
@@ -114,8 +118,12 @@ def test_validate_result_accepts_dataset_product_with_image() -> None:
                 node(
                     {
                         "job_id": str(uuid4()),
+                        "generated_images": [
+                            {"design_index": 1, "path": "generated/job/design.png"}
+                        ],
                         "selected_products": [
                             {
+                                "design_index": 1,
                                 "product_id": str(product_id),
                                 "name": "Dataset Sofa",
                                 "role": "sofa",

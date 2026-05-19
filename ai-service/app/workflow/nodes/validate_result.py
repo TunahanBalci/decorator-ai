@@ -12,9 +12,28 @@ from app.workflow.state import DesignWorkflowState
 def validate_result_node(db: Session):
     def node(state: DesignWorkflowState) -> DesignWorkflowState:
         progress(db, state, "validate_result")
+        selected_products = state.get("selected_products", [])
+        if not selected_products:
+            raise PlacementValidationError("No catalog products were selected for the design")
+
+        generated_design_indices = {
+            int(image.get("design_index"))
+            for image in state.get("generated_images", [])
+            if image.get("design_index") is not None and image.get("path")
+        }
+        selected_design_indices = {
+            int(product.get("design_index"))
+            for product in selected_products
+            if product.get("design_index") is not None
+        }
+        if not selected_design_indices:
+            raise PlacementValidationError("Selected products are missing design indices")
+        if not generated_design_indices.intersection(selected_design_indices):
+            raise PlacementValidationError("No rendered design image was produced")
+
         product_repo = ProductRepository(db)
         storage = LocalImageStorage()
-        for product in state.get("selected_products", []):
+        for product in selected_products:
             has_required_placement = (
                 product.get("product_id") and product.get("role") and product.get("polygon")
             )

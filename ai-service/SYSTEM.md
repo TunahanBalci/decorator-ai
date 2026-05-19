@@ -328,8 +328,8 @@ class DesignWorkflowState(TypedDict, total=False):
 | `rerank_products` | — | Deterministic scoring from dataset metadata, style, color, material, room type, and spatial fit. Existing visible furniture is not a scoring signal. |
 | `plan_placements` | **Pro** | Gemini-assisted placement planning with normalized floor polygons, scale hints, and rotation hints. Floor zones and polygons are treated as practical guidance rather than exact render boxes; deterministic floor placement remains the fallback. |
 | `generate_images` | Gemini image edit or local renderer | Pluggable renderer via `rendering/factory.py`. `gemini_image_edit` sends the room photo plus selected product reference images to `gemini-3-pro-image-preview`; placement polygons are soft guidance so the model can remove white product backgrounds, resize, rotate, match perspective, and blend shadows/occlusion. If Gemini image editing is disabled or fails, it falls back to `overlay`. `overlay` remains the deterministic GPU-free fallback renderer. `mock_inpaint` creates masks/prompts for debug but returns the overlay composite as final. Debug masks are gated by `DEBUG_PLACEMENT=true`. |
-| `validate_result` | — | Verifies all selected products exist in the catalog, have dataset metadata, image paths/URLs, and required placement fields. |
-| `persist_result` | — | Saves final designs + selected products to PostgreSQL |
+| `validate_result` | — | Verifies at least one non-empty rendered design exists, and that every selected product exists in the catalog, has dataset metadata, image paths/URLs, and required placement fields. |
+| `persist_result` | — | Saves only non-empty final designs with both selected products and rendered image paths to PostgreSQL |
 
 ### Mock Mode
 

@@ -46,12 +46,14 @@ class DesignService:
         if not job:
             return None
         progress = None if job.status == JOB_STATUS_COMPLETED else job.workflow_state
+        designs = [self._design_out(design) for design in job.designs]
+        designs = [design for design in designs if _has_visible_design_content(design)]
         return DesignJobOut(
             job_id=job.id,
             status=job.status,
             progress=progress,
             error_message=job.error_message,
-            designs=[self._design_out(design) for design in job.designs],
+            designs=designs,
         )
 
     def _design_out(self, design) -> DesignOut:
@@ -158,3 +160,7 @@ def _placement_coordinate(polygon: list | dict | None) -> dict | None:
     if not xs or not ys:
         return None
     return {"x": (min(xs) + max(xs)) / 2, "y": max(ys)}
+
+
+def _has_visible_design_content(design: DesignOut) -> bool:
+    return bool(design.final_rendered_image_url and design.products)
