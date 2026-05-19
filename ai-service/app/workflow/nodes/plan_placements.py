@@ -166,7 +166,8 @@ def _validated_floor_placements(state: DesignWorkflowState, settings) -> dict:
             product["polygon"] = placement["target_polygon"]
 
     debug_image_path = None
-    if settings.debug_placement and resolved_room is not None:
+    debug_placement_enabled = bool(getattr(settings, "debug_placement", False))
+    if debug_placement_enabled and resolved_room is not None:
         debug_image_path = f"generated/debug/{state['job_id']}_placement.png"
         output_path = storage.resolve_generated_image(debug_image_path)
         draw_placement_debug_image(resolved_room, output_path, debug)

@@ -1,4 +1,5 @@
 from pathlib import Path
+from types import SimpleNamespace
 
 from PIL import Image
 
@@ -65,6 +66,40 @@ def test_invalid_placement_points_are_rejected() -> None:
 
     assert not valid
     assert "center_not_on_floor" in reasons
+
+
+def test_plan_placements_tolerates_settings_without_debug_flag(tmp_path: Path) -> None:
+    from app.workflow.nodes.plan_placements import _validated_floor_placements
+
+    settings = SimpleNamespace(
+        local_image_root=tmp_path / "images",
+        room_upload_dir=tmp_path / "images" / "rooms",
+        product_image_dir=tmp_path / "images" / "products",
+        generated_image_dir=tmp_path / "images" / "generated",
+    )
+    state = {
+        "job_id": "legacy-settings",
+        "room_image_path": "",
+        "selected_products": [{"product_id": "p1", "role": "coffee_table"}],
+        "room_analysis": {
+            "available_placement_zones": [
+                {
+                    "label": "floor",
+                    "polygon": [
+                        [0.0, 0.55],
+                        [1.0, 0.55],
+                        [1.0, 1.0],
+                        [0.0, 1.0],
+                    ],
+                }
+            ]
+        },
+    }
+
+    result = _validated_floor_placements(state, settings)
+
+    assert result["placement_plan"]["placements"]
+    assert result["placement_debug"].get("debug_image_path") is None
 
 
 def test_debug_image_and_placeholder_composite_are_written_for_sample_room(tmp_path: Path) -> None:
