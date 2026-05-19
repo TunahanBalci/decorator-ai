@@ -1,9 +1,32 @@
+"""Sprint 1+2 composite renderer.
+
+Renders furniture images onto the room photograph with:
+- Perspective-aware scaling (Sprint 2)
+- Bottom-center anchoring (Sprint 2)
+- Soft shadow rendering (Sprint 2)
+- Optional horizontal perspective skew (Sprint 2)
+
+Falls back to a labelled colored rectangle when the furniture image cannot
+be loaded.
+"""
+
 from pathlib import Path
 
+import structlog
 from PIL import Image, ImageDraw, ImageFont
 
+from app.core.config import get_settings
 from app.storage.local_storage import LocalImageStorage
+from app.utils.perspective import (
+    anchor_bottom_center,
+    apply_perspective_skew,
+    compute_furniture_dimensions,
+    compute_perspective_scale,
+    generate_shadow,
+)
 from app.utils.placement import normalized_to_pixel_polygon
+
+logger = structlog.get_logger(__name__)
 
 
 def render_placeholder_composite(
@@ -13,34 +36,65 @@ def render_placeholder_composite(
     products: list[dict],
     output_relative_path: str,
 ) -> tuple[str, Path]:
-    """Render a simple Sprint 1 placement preview.
+    """Render a perspective-aware placement preview.
 
-    The API stores placement polygons in normalized coordinates. This renderer
+    The API stores placement polygons in normalized coordinates.  This renderer
     converts them back to original room-image pixels only at draw time.
+
+    Sprint 2 improvements over the original flat paste:
+    - Furniture is scaled based on its vertical (depth) position.
+    - The placement point is treated as the furniture's bottom-center anchor.
+    - A soft shadow is composited beneath the furniture.
+    - An optional horizontal perspective skew can be applied.
     """
+    settings = get_settings()
     room_path = storage.resolve_room_image(room_image_path)
     output_path = storage.resolve_generated_image(output_relative_path)
+
     try:
         canvas = Image.open(room_path).convert("RGBA")
     except Exception:
         canvas = Image.new("RGBA", (1280, 720), (245, 241, 234, 255))
 
+    image_width, image_height = canvas.size
     draw = ImageDraw.Draw(canvas)
+
     for product in products:
         polygon = product.get("polygon") or []
         if not polygon:
             continue
-        pixel_polygon = normalized_to_pixel_polygon(polygon, *canvas.size)
-        x1, y1, x2, y2 = _bbox(pixel_polygon)
-        furniture = _load_product_image(
-            storage,
-            product.get("image_path"),
-            int(x2 - x1),
-            int(y2 - y1),
-        )
+
+        # ---- Extract placement anchor (bottom-center of polygon) --------
+        # The polygon is normalized [[x1,y1], [x2,y1], [x2,y2], [x1,y2]].
+        norm_xs = [pt[0] for pt in polygon]
+        norm_ys = [pt[1] for pt in polygon]
+        center_x_norm = (min(norm_xs) + max(norm_xs)) / 2.0
+        floor_y_norm = max(norm_ys)  # bottom edge = floor contact
+
+        # Convert to pixel coordinates.
+        placement_x_px = center_x_norm * image_width
+        placement_y_px = floor_y_norm * image_height
+
+        # ---- Load furniture image ----------------------------------------
+        furniture = _load_product_image_raw(storage, product.get("image_path"))
+
         if furniture is not None:
-            canvas.alpha_composite(furniture, (int(x1), int(y1)))
+            _render_furniture_with_perspective(
+                canvas=canvas,
+                furniture=furniture,
+                center_x_norm=center_x_norm,
+                floor_y_norm=floor_y_norm,
+                placement_x_px=placement_x_px,
+                placement_y_px=placement_y_px,
+                image_width=image_width,
+                image_height=image_height,
+                settings=settings,
+                product=product,
+            )
         else:
+            # Sprint 1 fallback: colored rectangle from the polygon bbox.
+            pixel_polygon = normalized_to_pixel_polygon(polygon, image_width, image_height)
+            x1, y1, x2, y2 = _bbox(pixel_polygon)
             draw.rounded_rectangle(
                 (x1, y1, x2, y2),
                 radius=10,
@@ -49,19 +103,125 @@ def render_placeholder_composite(
                 width=3,
             )
             label = str(product.get("role") or product.get("name") or "item")
-            draw.text((x1 + 8, y1 + 8), label[:28], fill=(255, 255, 255, 255), font=_font())
+            draw.text(
+                (x1 + 8, y1 + 8),
+                label[:28],
+                fill=(255, 255, 255, 255),
+                font=_font(),
+            )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     canvas.convert("RGB").save(output_path)
     return output_relative_path, output_path
 
 
-def _load_product_image(
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+
+def _render_furniture_with_perspective(
+    *,
+    canvas: Image.Image,
+    furniture: Image.Image,
+    center_x_norm: float,
+    floor_y_norm: float,
+    placement_x_px: float,
+    placement_y_px: float,
+    image_width: int,
+    image_height: int,
+    settings,
+    product: dict,
+) -> None:
+    """Scale, shadow, optionally skew, and composite one furniture piece."""
+    original_w, original_h = furniture.size
+    aspect_ratio = original_w / max(original_h, 1)
+
+    # ---- 1. Perspective-aware scaling -----------------------------------
+    # Lower normalized_y (top of image) = far away = smaller furniture.
+    # Higher normalized_y (bottom of image) = close = larger furniture.
+    scale = compute_perspective_scale(
+        floor_y_norm,
+        min_scale=settings.perspective_min_scale,
+        max_scale=settings.perspective_max_scale,
+    )
+
+    target_w, target_h = compute_furniture_dimensions(
+        scale,
+        settings.default_furniture_width,
+        aspect_ratio,
+    )
+
+    furniture_resized = furniture.resize(
+        (target_w, target_h), Image.Resampling.LANCZOS
+    )
+
+    # ---- 2. Optional perspective skew -----------------------------------
+    if settings.enable_perspective_skew:
+        furniture_resized = apply_perspective_skew(
+            furniture_resized,
+            center_x_norm,
+            max_skew_pixels=settings.perspective_max_skew,
+        )
+        # Dimensions may change slightly after skew.
+        target_w, target_h = furniture_resized.size
+
+    # ---- 3. Bottom-center anchoring -------------------------------------
+    paste_x, paste_y = anchor_bottom_center(
+        placement_x_px,
+        placement_y_px,
+        target_w,
+        target_h,
+        image_width,
+        image_height,
+    )
+
+    # ---- 4. Shadow rendering (placed *behind* the furniture) ------------
+    shadow = generate_shadow(
+        furniture_resized,
+        opacity=settings.shadow_opacity,
+        blur_radius=settings.shadow_blur_radius,
+        y_offset=settings.shadow_y_offset,
+    )
+    shadow_x = paste_x
+    shadow_y = paste_y  # shadow is already offset internally by y_offset
+    # Clamp shadow paste so it doesn't exceed canvas.
+    shadow_x = max(0, min(shadow_x, image_width - shadow.width))
+    shadow_y = max(0, min(shadow_y, image_height - shadow.height))
+    canvas.alpha_composite(shadow, (shadow_x, shadow_y))
+
+    # ---- 5. Paste furniture on top --------------------------------------
+    canvas.alpha_composite(furniture_resized, (paste_x, paste_y))
+
+    # ---- 6. Structured logging ------------------------------------------
+    logger.info(
+        "furniture_composited_perspective",
+        product_id=str(product.get("product_id", "")),
+        role=product.get("role"),
+        original_furniture_size={"w": original_w, "h": original_h},
+        final_furniture_size={"w": target_w, "h": target_h},
+        perspective_scale=round(scale, 4),
+        normalized_placement={"x": round(center_x_norm, 4), "y": round(floor_y_norm, 4)},
+        pixel_placement={"x": round(placement_x_px, 1), "y": round(placement_y_px, 1)},
+        paste_top_left={"x": paste_x, "y": paste_y},
+        shadow_settings={
+            "opacity": settings.shadow_opacity,
+            "blur_radius": settings.shadow_blur_radius,
+            "y_offset": settings.shadow_y_offset,
+        },
+        skew_enabled=settings.enable_perspective_skew,
+    )
+
+
+def _load_product_image_raw(
     storage: LocalImageStorage,
     image_path: str | None,
-    width: int,
-    height: int,
 ) -> Image.Image | None:
+    """Load a product image as RGBA without resizing.
+
+    Returns *None* when the image is unavailable (remote URL, missing file,
+    or corrupt), which signals the caller to use the rectangle fallback.
+    """
     if not image_path or image_path.startswith("http"):
         return None
     path = storage.resolve_product_image(image_path)
@@ -69,8 +229,7 @@ def _load_product_image(
         return None
     try:
         with Image.open(path) as image:
-            resized = image.convert("RGBA").resize((max(width, 1), max(height, 1)))
-            return resized
+            return image.convert("RGBA").copy()
     except Exception:
         return None
 

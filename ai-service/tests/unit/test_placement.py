@@ -109,7 +109,57 @@ def test_debug_image_and_placeholder_composite_are_written_for_sample_room(tmp_p
     assert composite_path.exists()
     with Image.open(composite_path) as composite:
         assert composite.size == (640, 480)
-        assert composite.getpixel((300, 330)) != (245, 241, 234)
+        # Sprint 2: furniture is perspective-scaled and bottom-center anchored.
+        # The composite should differ from the blank room somewhere in the
+        # placement region (normalized polygon spans 0.35–0.55 x, 0.55–0.85 y).
+        # Check a pixel near the bottom-center anchor area.
+        center_x = int(0.45 * 640)  # ~288
+        floor_y = int(0.85 * 480)   # ~408  — bottom of polygon
+        # The furniture or its shadow should have altered at least one nearby pixel.
+        region_changed = False
+        for dy in range(-40, 10):
+            px = composite.getpixel((center_x, max(0, min(floor_y + dy, 479))))
+            if px != (245, 241, 234):
+                region_changed = True
+                break
+        assert region_changed, "Composite should differ from blank room in the placement region"
+
+
+def test_composite_output_with_transparent_furniture(tmp_path: Path) -> None:
+    """Verify composite file is created with a transparent-background furniture PNG."""
+    settings = Settings(
+        local_image_root=tmp_path / "images",
+        room_upload_dir=tmp_path / "images" / "rooms",
+        product_image_dir=tmp_path / "images" / "products",
+        generated_image_dir=tmp_path / "images" / "generated",
+    )
+    storage = LocalImageStorage(settings)
+    room_path = storage.resolve_room_image("rooms/test-room.png")
+    product_path = storage.resolve_product_image("products/lamp.png")
+
+    # Room: solid color.
+    _write_image(room_path, size=(800, 600), color=(230, 225, 215))
+    # Furniture: RGBA with partial transparency (simulates a real product cutout).
+    product_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (60, 120), (200, 180, 160, 200)).save(product_path)
+
+    products = [
+        {
+            "product_id": "p2",
+            "role": "floor_lamp",
+            "image_path": "products/lamp.png",
+            "polygon": [[0.40, 0.50], [0.52, 0.50], [0.52, 0.90], [0.40, 0.90]],
+        }
+    ]
+    relative_path, composite_path = render_placeholder_composite(
+        storage=storage,
+        room_image_path="rooms/test-room.png",
+        products=products,
+        output_relative_path="generated/test-composite.png",
+    )
+    assert composite_path.exists()
+    with Image.open(composite_path) as img:
+        assert img.size == (800, 600)
 
 
 def _write_image(
@@ -119,3 +169,4 @@ def _write_image(
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     Image.new("RGB", size, color).save(path)
+

@@ -16,6 +16,16 @@ class PlacementZone(BaseModel):
     notes: str | None = None
 
 
+class RoomStyleProfile(BaseModel):
+    """Structured style analysis of a room."""
+    style: str = "unknown"
+    confidence: float = 0.5
+    dominant_colors: list[str] = Field(default_factory=list)
+    materials: list[str] = Field(default_factory=list)
+    room_type: str = "living_room"
+    design_mood: str | None = None
+
+
 class RoomAnalysisResult(BaseModel):
     schema_version: str = "1.0"
     room_type: str
@@ -27,6 +37,8 @@ class RoomAnalysisResult(BaseModel):
     available_placement_zones: list[PlacementZone] = Field(default_factory=list)
     constraints: dict = Field(default_factory=dict)
     confidence: float = Field(validation_alias=AliasChoices('confidence', 'overall_confidence'))
+    style_profile: RoomStyleProfile | None = None
+
 
 
 class DesignStrategy(BaseModel):

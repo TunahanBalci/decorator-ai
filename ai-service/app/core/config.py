@@ -44,6 +44,44 @@ class Settings(BaseSettings):
     max_candidates_per_item: int = 50
     max_selected_per_design: int = 8
 
+    # -- Sprint 2: Perspective-aware rendering ----------------------------
+    # Furniture scale range — lower y (far) gets min_scale, higher y (close)
+    # gets max_scale.  The linear formula is:
+    #   scale = min + (normalized_y × (max − min))
+    perspective_min_scale: float = 0.35
+    perspective_max_scale: float = 1.2
+    default_furniture_width: int = 200  # pixels at scale=1.0
+
+    # Shadow rendering
+    shadow_opacity: float = 0.45
+    shadow_blur_radius: int = 15
+    shadow_y_offset: int = 10
+
+    # Optional perspective skew (disabled by default; can cause visual bugs)
+    enable_perspective_skew: bool = False
+    perspective_max_skew: float = 12.0  # max horizontal shift in pixels
+
+    # -- Sprint 3: Rendering architecture ---------------------------------
+    # Supported render methods:
+    #   "overlay"       — Sprint 2 perspective PNG overlay (default, no GPU)
+    #   "mock_inpaint"  — simulates SDXL pipeline (mask + prompt), renders via overlay
+    #   "sdxl_inpaint"  — real SDXL + ControlNet (requires torch + diffusers + GPU)
+    #   "external_ai"   — external API service (Replicate, Stability, Vertex Imagen)
+    render_method: str = "overlay"
+
+    # Mask generation for inpainting
+    mask_dilation_px: int = 10  # dilate mask edges for better blending
+
+    # -- Sprint 5: External AI inpainting provider -------------------------
+    # Provider: "mock" | "replicate" | "huggingface" | "stability"
+    external_ai_provider: str = "mock"
+    external_ai_api_key: str | None = None  # loaded from env only, never hardcode
+    external_ai_timeout_seconds: int = 120
+    external_ai_max_retries: int = 2
+    external_ai_image_size: int = 1024
+    external_ai_save_payloads: bool = True  # save request payloads for debug
+    external_ai_fallback_to_overlay: bool = True  # fall back on provider failure
+
 
 @lru_cache
 def get_settings() -> Settings:

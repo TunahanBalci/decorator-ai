@@ -215,7 +215,29 @@ Container içinde bu dizin `/data/images` olarak mount edilir. API yanıtlarınd
 
 Sprint 1 yerleşim renderer'ı gelişmiş image generation değildir; seçilen ürün görselini
 veya placeholder bloğunu normalize placement polygon'una basan basit bir Pillow composite
-üretir. Çıktı yolu tipik olarak `generated/{job_id}/design_0_composite.png` formatındadır.
+üretir. Sprint 2 ile renderer perspektif farkındalıklı ölçekleme (düşük y = uzak = küçük,
+yüksek y = yakın = büyük), alt-orta bağlama noktası ve yumuşak gölge oluşturma ile
+geliştirilmiştir. Sprint 3 ile renderer mimarisi takılabilir (pluggable) hale getirilmiştir:
+`RENDER_METHOD` ayarı ile `overlay` (varsayılan, GPU gerektirmez), `mock_inpaint` (maske +
+prompt oluşturur, overlay ile render eder), `sdxl_inpaint` (gelecekte GPU ile) ve `external_ai`
+(Replicate, Stability API gibi harici servisler) desteklenir. GPU bağımlılıkları eksikse
+otomatik olarak overlay renderer'a düşer.
+
+Sprint 4 ile çoklu mobilya yerleşimi için akıllı düzen planlaması eklenmiştir.
+`app/layout/` paketi oda bölgeleme (`zones.py`), mobilya ilişki kuralları (`constraints.py`),
+çarpışma tespiti (`collision.py`), düzen planlayıcı (`planner.py`) ve 6 boyutlu düzen
+puanlama (`scoring.py`) modüllerini içerir. Anchor-first strateji ile büyük mobilyalar
+önce yerleştirilir, ardından secondary mobilyalar (sehpa koltuk yanına, komodin yatak yanına)
+ilişki kurallarına göre konumlandırılır. `num_layouts` parametresi ile birden fazla düzen
+varyasyonu (balanced, cozy, minimalist) üretilebilir.
+
+Sprint 5 ile bulut tabanlı AI inpainting sağlayıcı mimarisi eklenmiştir.
+`app/rendering/providers/` paketi `InpaintProvider` arayüzü, `MockProvider` (API key'siz test),
+`ReplicateProvider`, `HuggingFaceProvider` ve `StabilityProvider` placeholder'ları içerir.
+`EXTERNAL_AI_PROVIDER` ve `EXTERNAL_AI_API_KEY` ortam değişkenleri ile sağlayıcı seçilir.
+İteratif rendering ile büyük mobilyalar önce, dekoratif öğeler sonra render edilir.
+Sağlayıcı başarısız olursa otomatik olarak overlay renderer'a düşer.
+Çıktı yolu tipik olarak `generated/{job_id}/design_0_composite.png` formatındadır.
 
 ## 5. Flutter Uygulaması
 

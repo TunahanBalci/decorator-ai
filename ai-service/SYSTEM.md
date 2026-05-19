@@ -85,11 +85,32 @@ ai-service/
 │   │   ├── design_service.py  # Orchestrates job creation + result formatting
 │   │   ├── product_service.py # Wraps vector search
 │   │   └── upload_service.py  # Delegates to LocalImageStorage
+│   ├── rendering/
+│   │   ├── base.py            # Sprint 3: FurnitureRenderer interface + RenderResult
+│   │   ├── overlay_renderer.py  # Default GPU-free overlay renderer
+│   │   ├── mock_inpaint_renderer.py  # Simulates SDXL pipeline (mask + prompt)
+│   │   ├── external_renderer.py  # Sprint 5: cloud AI inpainting via providers
+│   │   ├── masks.py           # Inpainting mask generation
+│   │   ├── prompts.py         # Dynamic inpainting prompt generation
+│   │   ├── factory.py         # Renderer factory with fallback chain
+│   │   └── providers/         # Sprint 5: pluggable AI provider backends
+│   │       ├── base.py        # InpaintProvider interface + request/response
+│   │       ├── mock_provider.py  # Offline mock (no API key needed)
+│   │       ├── replicate_provider.py  # Replicate API placeholder
+│   │       ├── huggingface_provider.py  # HF Inference API placeholder
+│   │       └── stability_provider.py  # Stability AI placeholder
+│   ├── layout/                # Sprint 4: multi-furniture layout planning
+│   │   ├── zones.py           # Room zone division (living_room, bedroom, office)
+│   │   ├── constraints.py     # Furniture relationship rules + render order
+│   │   ├── collision.py       # Collision detection + spacing enforcement
+│   │   ├── planner.py         # LayoutPlanner (anchor-first, zone-aware)
+│   │   └── scoring.py         # Layout quality scoring (6 dimensions)
 │   ├── storage/
 │   │   └── local_storage.py   # File I/O for room, product, generated images
 │   ├── utils/
 │   │   ├── geometry.py        # Polygon math (overlap, area, clamping)
-│   │   ├── scoring.py         # Deterministic product scoring
+│   │   ├── perspective.py     # Sprint 2: scale, anchor, shadow, skew
+│   │   ├── scoring.py         # Sprint 4: style-aware product scoring (6 factors)
 │   │   ├── json_utils.py      # JSON extraction from AI output
 │   │   └── image_utils.py     # Image helper stubs
 │   ├── vector/
@@ -288,7 +309,7 @@ class DesignWorkflowState(TypedDict, total=False):
 | `retrieve_candidates` | Text + Image embeddings | **Hybrid search**: text vectors via text-embedding-005 + image vectors via multimodalembedding@001. Passes room image for visual similarity matching. |
 | `rerank_products` | — | Deterministic scoring: category, style, color, material fit |
 | `plan_placements` | — | Validated normalized floor placements. Uses detected floor zones when reliable, otherwise bottom 45-55% fallback, and rejects wall/outside/overlap candidates. |
-| `generate_images` | — | Writes a simple Pillow placeholder overlay composite for each design. Advanced generation remains separate from Sprint 1 placement. |
+| `generate_images` | — | Sprint 3 pluggable renderer via `rendering/factory.py`. Supports `render_method`: `overlay` (default, Sprint 2 perspective composite), `mock_inpaint` (simulated SDXL pipeline with mask/prompt generation), `sdxl_inpaint` (future GPU), `external_ai` (future API). Falls back to overlay when dependencies are missing. When `DEBUG_PLACEMENT=true`, writes debug composites, masks, and prompts. |
 | `validate_result` | — | Verifies all products have required placement fields |
 | `persist_result` | — | Saves final designs + selected products to PostgreSQL |
 
