@@ -6,13 +6,15 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import requests
-from google.auth import default
 from google.auth.transport.requests import Request
+from google.oauth2 import service_account
 
 
 DEFAULT_LOCATION = "global"
 DEFAULT_MODEL_ID = "gemini-3-flash-preview"
 _VERTEX_SCOPE = "https://www.googleapis.com/auth/cloud-platform"
+_DEFAULT_SERVICE_ACCOUNT_PATH = Path("secrets/gcp-service-account.json")
+_DATA_DIR = Path(__file__).resolve().parent.parent
 
 
 class VertexAIError(RuntimeError):
@@ -30,10 +32,13 @@ class VertexAIClient:
         project_id: Optional[str] = None,
         model_id: Optional[str] = None,
         location: Optional[str] = None,
+        credentials_path: Optional[str] = None,
     ):
         self.project_id = _env("PROJECT_ID", project_id)
         self.model_id = _env("MODEL_ID", model_id) or DEFAULT_MODEL_ID
         self.location = _env("VERTEX_LOCATION", location) or DEFAULT_LOCATION
+        self.credentials_path = _env("GOOGLE_APPLICATION_CREDENTIALS", credentials_path)
+        self._credentials = None
         if not self.project_id:
             raise VertexAIError("PROJECT_ID is required for Vertex AI calls")
 
@@ -45,12 +50,37 @@ class VertexAIClient:
             f"publishers/google/models/{self.model_id}:streamGenerateContent"
         )
 
+    def _credentials_file(self) -> Path:
+        raw_path = self.credentials_path or str(_DEFAULT_SERVICE_ACCOUNT_PATH)
+        candidate = Path(raw_path).expanduser()
+        candidates = [candidate]
+        if not candidate.is_absolute():
+            candidates = [
+                Path.cwd() / candidate,
+                _DATA_DIR / candidate,
+                _DATA_DIR.parent / candidate,
+            ]
+
+        for path in candidates:
+            if path.exists() and path.is_file():
+                return path
+
+        searched = ", ".join(str(path) for path in candidates)
+        raise VertexAIError(
+            "GOOGLE_APPLICATION_CREDENTIALS must point to a service account JSON key. "
+            f"Searched: {searched}"
+        )
+
     def _access_token(self) -> str:
-        credentials, _ = default(scopes=[_VERTEX_SCOPE])
-        credentials.refresh(Request())
-        if not credentials.token:
-            raise VertexAIError("Could not obtain Google application default access token")
-        return credentials.token
+        if self._credentials is None:
+            self._credentials = service_account.Credentials.from_service_account_file(
+                str(self._credentials_file()),
+                scopes=[_VERTEX_SCOPE],
+            )
+        self._credentials.refresh(Request())
+        if not self._credentials.token:
+            raise VertexAIError("Could not obtain Google service account access token")
+        return self._credentials.token
 
     def stream_generate_content(
         self,

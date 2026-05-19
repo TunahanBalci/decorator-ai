@@ -356,13 +356,14 @@ The deterministic fallback is intentional. It keeps local development and crawle
 
 ### Vertex AI Client
 
-`preprocessor/vertex_ai.py` is the only module that should know how to call Vertex AI directly. It uses Google Application Default Credentials, not API keys.
+`preprocessor/vertex_ai.py` is the only module that should know how to call Vertex AI directly. It uses a service account JSON key through `GOOGLE_APPLICATION_CREDENTIALS`, not personal ADC login and not API keys.
 
 Configuration comes from environment variables:
 
 - `PROJECT_ID`: Google Cloud project id, for example `decorator-ai`.
 - `MODEL_ID`: Vertex publisher model id, for example `gemini-3-flash-preview`.
 - `VERTEX_LOCATION`: optional, defaults to `global`.
+- `GOOGLE_APPLICATION_CREDENTIALS`: path to the service account JSON key, typically `secrets/gcp-service-account.json` when running from `data/`.
 
 The endpoint format is:
 
@@ -377,7 +378,7 @@ https://aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/
 - `generationConfig.temperature`
 - optional `generationConfig.responseMimeType = "application/json"`
 
-The client refreshes an ADC token with the `https://www.googleapis.com/auth/cloud-platform` scope and sends it as a Bearer token.
+The client loads the service account key, refreshes an OAuth token with the `https://www.googleapis.com/auth/cloud-platform` scope, and sends it as a Bearer token.
 
 Streaming responses are normalized by `extract_text_from_stream_response()`, which accepts both JSON array responses and line-oriented streamed responses. It concatenates all candidate text parts.
 
@@ -421,16 +422,17 @@ A typical `.env` for generation is:
 ```bash
 PROJECT_ID=decorator-ai
 MODEL_ID=gemini-3-flash-preview
+GOOGLE_APPLICATION_CREDENTIALS=secrets/gcp-service-account.json
 ```
 
-No `GEMINI_API_KEY` is used. Authentication is provided by Google Application Default Credentials on the machine running the scripts.
+No `GEMINI_API_KEY` is used. Authentication is provided by a service account JSON key. The preprocessor intentionally does not fall back to a personal `gcloud auth application-default login` credential.
 
 ## Operational Notes for AI Agents
 
 - Keep crawler source-specific parsing in `crawler/spiders/` or `crawler/extractors/`.
 - Keep schema enrichment, AI prompts, and Vertex enrichment calls in `preprocessor/`.
 - Do not reintroduce direct Vertex HTTP calls outside `preprocessor/vertex_ai.py`.
-- Do not add API-key based Gemini calls. This project uses Vertex AI with ADC.
+- Do not add API-key based Gemini calls. This project uses Vertex AI with service account credentials.
 - Preserve JSONL as the boundary between crawler and preprocessor.
 - Do not reintroduce breadcrumb-based crawler filtering or breadcrumb-based preprocessor category inference; use direct accepted category URLs and product-list selectors in the crawler, and product text/metadata plus `source_category` hints in the preprocessor.
 - Keep parallel preprocessing writes centralized in the main thread; worker threads may call Vertex AI and build result payloads, but must not write shared output files.

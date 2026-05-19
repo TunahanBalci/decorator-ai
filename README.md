@@ -96,7 +96,7 @@ Ana dosyalar:
 - `models.py`: Pydantic şemaları ve desteklenen taksonomiler.
 - `enrich_products.py`: Ana batch zenginleştirme CLI'ı.
 - `run.py`: İnteraktif zenginleştirme sarmalayıcısı.
-- `vertex_ai.py`: Vertex AI REST istemcisi ve ADC tabanlı kimlik doğrulama.
+- `vertex_ai.py`: Vertex AI REST istemcisi ve service account key tabanlı kimlik doğrulama.
 - `labeler.py`: Görsel destekli etiketleme yolu.
 
 Preprocessor iki modda çalışabilir:
@@ -339,14 +339,11 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Google Cloud ADC için seçeneklerden birini kullanın:
+Data hattı Vertex AI çağrıları için kişisel `gcloud auth application-default login` kullanılmaz. Backend ile aynı model izlenir: service account JSON key dosyasını localde tutun ve path değerini env üzerinden verin. Önerilen konum:
 
 ```bash
-# Geliştirici hesabı ile
-gcloud auth application-default login
-
-# veya service account key ile
-export GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/service-account.json
+mkdir -p secrets
+# gcp-service-account.json dosyasını data/secrets/ altına koyun. Bu klasör gitignore içindedir.
 ```
 
 `data/.env` dosyasını hazırlayın. Örnek:
@@ -355,6 +352,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/service-account.json
 PROJECT_ID=your-gcp-project-id
 MODEL_ID=gemini-3-flash-preview
 VERTEX_LOCATION=global
+GOOGLE_APPLICATION_CREDENTIALS=secrets/gcp-service-account.json
 ```
 
 Ham ürün toplamak için:
