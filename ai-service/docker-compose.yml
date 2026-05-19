@@ -10,6 +10,8 @@ services:
     volumes:
       - .:/app
       - ./data/images:/data/images
+      - ./secrets:/secrets:ro
+      - ../data:/data/pipeline:ro
     depends_on:
       - postgres
       - redis
@@ -24,6 +26,8 @@ services:
     volumes:
       - .:/app
       - ./data/images:/data/images
+      - ./secrets:/secrets:ro
+      - ../data:/data/pipeline:ro
     depends_on:
       - postgres
       - redis
@@ -70,4 +74,3 @@ volumes:
   postgres_data:
   redis_data:
   qdrant_data:
-

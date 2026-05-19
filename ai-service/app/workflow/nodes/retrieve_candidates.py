@@ -27,7 +27,10 @@ def retrieve_candidates_node(db: Session):
                 )
                 key = f"{strategy['design_index']}:{role}"
                 intents.append(intent.model_dump())
-                candidate_products[key] = [c.model_dump(mode="json") for c in search_products(db, intent)]
+                candidate_products[key] = [
+                    c.model_dump(mode="json")
+                    for c in search_products(db, intent, room_image_path=state.get("room_image_path"))
+                ]
         return {"retrieval_intents": intents, "candidate_products": candidate_products}
 
     return node

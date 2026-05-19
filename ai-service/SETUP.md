@@ -1,155 +1,199 @@
-# Setup And Verification
+# Setup Guide — VisionSpace AI Service
 
-This backend is designed to run on Ubuntu 24.04 LTS with Docker Compose. The crawler and preprocessing outputs are assumed to already exist and are not part of this project.
+## Prerequisites
 
-## 1. Install Server Dependencies
+- **Docker** and **Docker Compose** (v2+)
+- A **Google Cloud** project with the following APIs enabled:
+  - Vertex AI API
+  - Vertex AI Multimodal API (for image embeddings)
+- A **GCP service account** with the `roles/aiplatform.user` role
 
-From `ai-service/`:
+---
 
-```bash
-sudo bash scripts/install_ubuntu_24_04.sh
-```
-
-The script installs Docker, Docker Compose, `git`, `make`, and Python basics, creates image directories, and copies `.env.example` to `.env` if needed.
-
-## 2. Configure `.env`
-
-Required before running:
+## Step 1 — Clone and Configure
 
 ```bash
+cd ai-service
 cp .env.example .env
 ```
 
-Review these values:
+Edit `.env` and set your values:
 
-- `PRODUCT_IMAGE_DIR`: set this to the product image directory on the target server.
-- `LOCAL_IMAGE_ROOT`: parent image root mounted into Docker, default `/data/images`.
-- `GEMINI_API_KEY`: set this for real Gemini calls.
-- `MOCK_AI`: keep `true` for the mocked workflow; set `false` only after real AI stages are implemented and configured.
-- `ENABLE_IMAGE_GENERATION`: keep `false` for now. Product identity and polygons work without generated images.
-
-## 3. Start Services
-
-```bash
-make up
-make migrate
-make create-qdrant
+```env
+VERTEX_PROJECT_ID=your-gcp-project-id   # required
+VERTEX_MODEL_ID=gemini-3-flash-preview   # light tasks
+VERTEX_PRO_MODEL_ID=gemini-3.1-pro-preview  # heavy reasoning
+VERTEX_MULTIMODAL_LOCATION=us-central1   # region for image embeddings
 ```
 
-Check API health:
+Change `POSTGRES_PASSWORD` if deploying to a server.
+
+---
+
+## Step 2 — Add GCP Credentials
+
+Place your service account key in the `secrets/` directory:
+
+```bash
+mkdir -p secrets
+cp /path/to/your-service-account-key.json secrets/gcp-service-account.json
+```
+
+The Docker containers mount this file read-only at `/secrets/gcp-service-account.json`.
+
+> **Security**: The `secrets/` directory is in `.gitignore`. Never commit credentials.
+
+---
+
+## Step 3 — Start Services
+
+```bash
+make setup
+```
+
+This single command:
+1. Builds and starts all containers (API, worker, PostgreSQL, Redis, Qdrant, Adminer)
+2. Runs database migrations (Alembic)
+3. Creates the Qdrant vector collection with **dual named vectors**:
+   - `text` (768-dim) for semantic text search
+   - `image` (1408-dim) for visual similarity search
+
+---
+
+## Step 4 — Import Product Data
+
+If you have enriched product data from the preprocessor:
+
+```bash
+make import-enriched
+```
+
+This imports `enriched_products.jsonl` from the data pipeline directory. To specify a custom file:
+
+```bash
+make import-enriched file=/path/to/your/enriched_products.jsonl
+```
+
+> **Note**: The path must be accessible inside the Docker container. The default mount maps `../data/` to `/data/pipeline/` inside the container.
+
+---
+
+## Step 5 — Index Products (Text + Image Vectors)
+
+```bash
+make index-products
+```
+
+This step:
+1. Embeds all products' **semantic text** using `text-embedding-005` (768-dim vectors)
+2. Downloads each product's **primary image** from its URL
+3. Embeds each product image using `multimodalembedding@001` (1408-dim vectors)
+4. Upserts both vectors as named vectors into Qdrant
+
+> **Note**: Image embedding downloads product photos from their source URLs. This requires internet access from the container. Products without downloadable images get a fallback vector.
+
+---
+
+## Step 6 — Verify
+
+Check the API is running:
 
 ```bash
 curl http://localhost:8000/health
+# {"status":"ok"}
 ```
 
-Expected:
+Open the interactive API docs:
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+- **Adminer** (DB): http://localhost:8080
 
+---
+
+## Usage — Full Design Flow
+
+### 1. Upload a room image
+
+```bash
+curl -X POST http://localhost:8000/uploads/room-image \
+  -F "file=@/path/to/room.jpg"
+```
+
+Response:
 ```json
-{"status":"ok"}
+{"image_path": "rooms/2026/05/abc123.jpg", "width": 1920, "height": 1080}
 ```
 
-## 4. Import Product Data
-
-For a smoke test with demo data:
-
-```bash
-make import-products file=samples/products.demo.json
-make index-products
-```
-
-For real data:
-
-```bash
-make import-products file=/path/to/products.json
-make index-products
-```
-
-The importer expects the tolerant JSON array shape described in `TEMP.md`. Existing products are updated by `external_id`.
-
-## 5. Run Worker
-
-The worker starts with Compose by default. To run it manually:
-
-```bash
-make worker
-```
-
-## 6. Upload The Provided Image
-
-The provided image is at `../TEMP/input.jpeg` from this directory.
-
-```bash
-curl -F "file=@../TEMP/input.jpeg" http://localhost:8000/uploads/room-image
-```
-
-The response returns a relative image path like:
-
-```json
-{
-  "image_path": "rooms/2026/05/abc.jpeg",
-  "width": 1280,
-  "height": 720
-}
-```
-
-Use that `image_path` when creating a design job.
-
-## 7. Create A Design Job
+### 2. Create a design job
 
 ```bash
 curl -X POST http://localhost:8000/design-jobs \
   -H "Content-Type: application/json" \
   -d '{
-    "room_image_path": "rooms/2026/05/replace_with_upload_response.jpeg",
-    "room_dimensions": {
-      "unit": "cm",
-      "current_wall_length_cm": 420,
-      "room_depth_cm": 360,
-      "ceiling_height_cm": 270,
-      "known_reference_objects": []
-    },
-    "preferences": {
-      "mode": "auto_design",
-      "replace_existing_furniture": true,
-      "requested_furniture_types": ["coffee_table", "carpet", "floor_lamp"],
-      "replace_targets": [],
-      "design_style": "scandinavian",
-      "material": "wood",
-      "colors": ["beige", "oak"],
-      "temperature": "warm",
-      "size": "medium",
-      "budget": null,
-      "extra_preferences": "cozy but minimal"
-    },
-    "requested_design_count": 1
+    "room_image_path": "rooms/2026/05/abc123.jpg",
+    "room_dimensions": {"unit": "cm", "current_wall_length_cm": 400},
+    "preferences": {"design_style": "modern", "temperature": "warm"},
+    "requested_design_count": 2
   }'
 ```
 
-Then poll:
-
-```bash
-curl http://localhost:8000/design-jobs/<job_id>
+Response:
+```json
+{"job_id": "550e8400-...", "status": "queued"}
 ```
 
-## 8. Local Developer Checks
-
-Without Docker:
+### 3. Poll for results
 
 ```bash
-python3 -m compileall app scripts tests
-pytest -q
-docker compose config
+curl http://localhost:8000/design-jobs/550e8400-...
 ```
 
-These checks validate syntax, utility behavior, schemas, storage path handling, Qdrant filter construction, and Compose wiring.
+The job progresses through: `queued` → `running` → `completed` (or `failed`).
 
-## Missing Or Needs Your Input
+When completed, the response contains full design proposals with product selections and placement polygons. Product retrieval uses **hybrid search** — the uploaded room image is compared against product images for visual style matching.
 
-- Real product catalog JSON: required for useful recommendations.
-- Product image directory: set `PRODUCT_IMAGE_DIR` to the final target server path.
-- Gemini API key: required for real AI stages.
-- Real Gemini room analysis and placement planning: current workflow uses mocked room analysis and deterministic placement so the backend can run end-to-end safely first.
-- True embedding generation: Qdrant indexing currently uses deterministic placeholder vectors; replace with real embedding generation when the chosen embedding model is finalized.
-- Image generation/editing: intentionally disabled unless `ENABLE_IMAGE_GENERATION=true`; the implementation currently keeps generated image creation as a future gated step.
-- Production secrets: replace default Postgres password and any placeholder keys before deployment.
+---
 
+## How Hybrid Search Works
+
+When the AI pipeline searches for furniture to recommend:
+
+1. **Text search**: The query (e.g., "modern warm dining table") is embedded and matched against product descriptions
+2. **Image search**: Your uploaded room photo is embedded and matched against product images — finding furniture that *looks like it belongs* in your room
+3. **Score fusion**: Text (60%) + Image (40%) similarity are combined with attribute matching for final ranking
+
+This means products are selected not just by keyword matching, but by **visual style compatibility** with your actual room.
+
+---
+
+## Makefile Reference
+
+| Command | Description |
+|---|---|
+| `make setup` | Build, start, migrate, create Qdrant collection |
+| `make up` | Build and start all containers |
+| `make down` | Stop all containers |
+| `make logs` | Follow container logs |
+| `make migrate` | Run Alembic migrations |
+| `make import-enriched` | Import enriched product data |
+| `make index-products` | Vectorize products into Qdrant (text + images) |
+| `make create-qdrant` | Create/recreate Qdrant collection |
+
+---
+
+## Moving to a Server
+
+The system is fully portable via Docker:
+
+1. Copy the `ai-service/` directory to the server
+2. Copy your `.env` file (update `POSTGRES_PASSWORD` for production)
+3. Copy your `secrets/gcp-service-account.json`
+4. Copy your enriched product data to the expected location
+5. Run `make setup && make import-enriched && make index-products`
+
+All service URLs (PostgreSQL, Redis, Qdrant) resolve via Docker's internal networking — no host changes needed.
+
+For production, consider:
+- Placing a reverse proxy (Nginx/Caddy) in front of port 8000
+- Using Docker volumes or bind mounts for persistent data
+- Setting `APP_ENV=production` and disabling `--reload` in the API command

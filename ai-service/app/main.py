@@ -6,9 +6,22 @@ from app.core.logging import configure_logging
 
 configure_logging()
 
-app = FastAPI(title=get_settings().app_name)
-app.include_router(health.router)
+settings = get_settings()
+
+app = FastAPI(
+    title="VisionSpace AI Service",
+    description=(
+        "Furniture recommendation API. Upload a room photo, receive AI-powered "
+        "design proposals with product selections and placement plans. "
+        "The pipeline orchestrates room analysis, design strategy creation, "
+        "product retrieval via vector search, ranking, and spatial placement."
+    ),
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+)
+app.include_router(health.router, tags=["health"])
 app.include_router(uploads.router)
 app.include_router(design_jobs.router)
 app.include_router(products.router)
-

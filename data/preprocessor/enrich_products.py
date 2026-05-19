@@ -1,7 +1,7 @@
 import argparse
 import hashlib
 import threading
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import os
 import re
@@ -876,13 +876,23 @@ def enrich_file(
             return
 
         with ThreadPoolExecutor(max_workers=parallel_requests) as executor:
-            # Parallel path: tqdm MUST wrap the results iterator, not the input.
-            # executor.map() submits all tasks nearly instantly, so wrapping rows
-            # would show 100% before any HTTP call completes and then hang silently.
-            results = executor.map(lambda row: enrich_row(row, use_vertex), rows)
+            # Submit all tasks and track their original index for ordered output.
+            futures = {
+                executor.submit(enrich_row, row, use_vertex): idx
+                for idx, row in enumerate(rows)
+            }
+            # Collect results as they complete (tqdm advances per completion).
+            results_by_idx: dict[int, tuple] = {}
+            completed_iter = as_completed(futures)
             if tqdm:
-                results = tqdm(results, desc="enriching", total=len(rows))
-            for _, output_line, error_payload, warning in results:
+                completed_iter = tqdm(completed_iter, desc="enriching", total=len(futures))
+            for future in completed_iter:
+                idx = futures[future]
+                results_by_idx[idx] = future.result()
+
+            # Write output in original order to preserve JSONL ordering.
+            for idx in range(len(results_by_idx)):
+                _, output_line, error_payload, warning = results_by_idx[idx]
                 if warning:
                     print(warning)
                 if error_payload:

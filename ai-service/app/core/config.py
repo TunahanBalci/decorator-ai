@@ -12,18 +12,23 @@ class Settings(BaseSettings):
     app_name: str = "ai-service"
     api_host: str = "0.0.0.0"
     api_port: int = 8000
-    mock_ai: bool = True
+    mock_ai: bool = False
 
     database_url: str = "postgresql+psycopg://postgres:postgres@postgres:5432/furniture_ai"
     redis_url: str = "redis://redis:6379/0"
 
     qdrant_url: str = "http://qdrant:6333"
     qdrant_collection_products: str = "furniture_products"
-    qdrant_vector_size: int = 768
+    qdrant_text_vector_size: int = 768
+    qdrant_image_vector_size: int = 1408
 
-    gemini_api_key: str | None = None
-    gemini_text_model: str = "gemini-2.5-flash"
-    gemini_image_model: str = "gemini-2.5-flash-image"
+    vertex_project_id: str | None = None
+    vertex_model_id: str = "gemini-3-flash-preview"
+    vertex_pro_model_id: str = "gemini-3.1-pro-preview"
+    vertex_location: str = "global"
+    vertex_embedding_model: str = "text-embedding-005"
+    vertex_multimodal_model: str = "multimodalembedding@001"
+    vertex_multimodal_location: str = "us-central1"
 
     local_image_root: Path = Field(default=Path("/data/images"))
     product_image_dir: Path = Field(default=Path("/data/images/products"))
@@ -40,4 +45,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-

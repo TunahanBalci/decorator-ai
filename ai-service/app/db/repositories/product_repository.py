@@ -50,6 +50,17 @@ class ProductRepository:
         product.enriched_metadata = item.get("enriched_metadata") or {}
         product.metadata_confidence = item.get("metadata_confidence") or {}
         product.is_active = bool(item.get("is_active", True))
+
+        # Rich enrichment columns
+        product.semantic_text = item.get("semantic_text")
+        product.shape = item.get("shape")
+        product.visual_features = item.get("visual_features") or []
+        product.design_tags = item.get("design_tags") or []
+        product.visual_weight = item.get("visual_weight")
+        product.spatial_feel = item.get("spatial_feel")
+        product.usage_intent = item.get("usage_intent") or []
+        product.quality_tier = item.get("quality_tier")
+
         self.db.flush()
         return product
 
