@@ -196,6 +196,8 @@ The API is self-documenting via **OpenAPI**. When the service is running, visit:
             "external_id": "22DST2550CVPD",
             "name": "Destina Konsol",
             "category": "console_table",
+            "brand": "İstikbal",
+            "store_name": "İstikbal",
             "role": "console_table",
             "source_url": "https://...",
             "price": {"amount": 18370.0, "currency": "TL"},

@@ -1,7 +1,8 @@
 from uuid import UUID
 
-from sqlalchemy.orm import Session
 from typing import Any
+
+from sqlalchemy.orm import Session
 
 from app.core.constants import JOB_STATUS_COMPLETED
 from app.db.models.design_job import DesignJob
@@ -13,6 +14,7 @@ from app.schemas.design_job import (
     DesignOut,
     ProductCard,
 )
+from app.utils.store_names import normalize_store_name_from_url
 
 
 class DesignService:
@@ -57,7 +59,11 @@ class DesignService:
         products = []
         for selected in design.selected_products:
             product = selected.product
-            primary = next((img for img in product.images if img.is_primary), product.images[0] if product.images else None)
+            primary = next(
+                (img for img in product.images if img.is_primary),
+                product.images[0] if product.images else None,
+            )
+            store_name = normalize_store_name_from_url(product.source_url)
             if selected.polygon:
                 regions.append(
                     ClickableRegion(
@@ -72,6 +78,8 @@ class DesignService:
                     external_id=product.external_id,
                     name=product.name,
                     category=product.category,
+                    brand=store_name,
+                    store_name=store_name,
                     role=selected.role,
                     source_url=product.source_url,
                     image_path=primary.relative_path if primary else None,

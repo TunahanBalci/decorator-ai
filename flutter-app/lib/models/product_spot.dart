@@ -74,11 +74,16 @@ class ProductSpot {
     final rawScore = (json['score'] as num?)?.toDouble() ?? 0.0;
     final normalizedScore = rawScore <= 1 ? rawScore * 100 : rawScore;
     final imagePath = json['image_path'] as String? ?? '';
+    final storeName =
+        json['store_name'] as String? ??
+        json['storeName'] as String? ??
+        json['source_name'] as String? ??
+        '';
 
     return ProductSpot(
       id: json['product_id'] as String? ?? json['external_id'] as String? ?? '',
       name: json['name'] as String? ?? '',
-      brand: json['role'] as String? ?? json['category'] as String? ?? '',
+      brand: json['brand'] as String? ?? storeName,
       price: priceStr,
       matchScore: normalizedScore.round().clamp(0, 100).toInt(),
       left: hotspotLeft.clamp(0.0, 1.0),
@@ -87,7 +92,7 @@ class ProductSpot {
           ? imageUrlBuilder(imagePath)
           : imagePath,
       buyUrl: json['source_url'] as String? ?? '',
-      storeName: '',
+      storeName: storeName,
     );
   }
 

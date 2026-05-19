@@ -28,6 +28,8 @@ class ProductCard(BaseModel):
     external_id: str
     name: str
     category: str
+    brand: str | None = None
+    store_name: str | None = None
     role: str | None = None
     source_url: str | None = None
     image_path: str | None = None
@@ -59,4 +61,3 @@ class DesignJobOut(BaseModel):
     progress: dict | None = None
     error_message: str | None = None
     designs: list[DesignOut] = Field(default_factory=list)
-

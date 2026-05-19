@@ -69,6 +69,8 @@ void main() {
         'product_id': 'p1',
         'name': 'Oak Coffee Table',
         'role': 'coffee_table',
+        'category': 'floor_lamp',
+        'store_name': 'IKEA',
         'score': 0.91,
         'image_path': 'products/oak/main.jpg',
         'source_url': 'https://store.example/item',
@@ -93,6 +95,39 @@ void main() {
       'http://localhost:8000/images/products/oak/main.jpg',
     );
     expect(product.buyUrl, 'https://store.example/item');
+    expect(product.storeName, 'IKEA');
+    expect(product.brand, 'IKEA');
+    expect(product.brand, isNot('coffee_table'));
+    expect(product.brand, isNot('floor_lamp'));
+  });
+
+  testWidgets('product detail normalizes technical backend store names', (
+    WidgetTester tester,
+  ) async {
+    const product = ProductSpot(
+      id: 'p-technical-store',
+      name: 'Floor Lamp',
+      brand: 'floor_lamp',
+      price: '1250 TL',
+      matchScore: 91,
+      left: 0.5,
+      top: 0.5,
+      imageUrl: 'https://example.com/lamp.jpg',
+      buyUrl: 'https://www.ikea.com.tr/urun/lamp',
+      storeName: 'floor_lamp',
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: ProductDetailPage(product: product),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('IKEA'), findsWidgets);
+    expect(find.text('floor_lamp'), findsNothing);
   });
 
   testWidgets('decorator_ai welcome screen loads', (WidgetTester tester) async {
@@ -347,6 +382,7 @@ void main() {
 
     expect(find.byType(ProductDetailPage), findsOneWidget);
     expect(find.text(l10n.productDetailTitle), findsOneWidget);
+    expect(find.text('Find Similar Products with AI'), findsNothing);
   });
 
   testWidgets(
@@ -407,6 +443,7 @@ void main() {
 
     expect(find.byType(ProductDetailPage), findsOneWidget);
     expect(find.text(l10n.productDetailTitle), findsOneWidget);
+    expect(find.text('Find Similar Products with AI'), findsNothing);
   });
 
   testWidgets('notifications page shows cards and correct title', (
