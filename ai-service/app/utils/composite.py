@@ -6,14 +6,16 @@ Renders furniture images onto the room photograph with:
 - Soft shadow rendering (Sprint 2)
 - Optional horizontal perspective skew (Sprint 2)
 
-Falls back to a labelled colored rectangle when the furniture image cannot
-be loaded.
+In normal mode, unavailable product images are skipped instead of drawing the
+green placement rectangle. The rectangle is a debug-only placement aid.
 """
 
+from io import BytesIO
 from pathlib import Path
 
 import structlog
 from PIL import Image, ImageDraw, ImageFont
+import requests
 
 from app.core.config import get_settings
 from app.storage.local_storage import LocalImageStorage
@@ -91,8 +93,9 @@ def render_placeholder_composite(
                 settings=settings,
                 product=product,
             )
-        else:
-            # Sprint 1 fallback: colored rectangle from the polygon bbox.
+        elif settings.debug_placement:
+            # Debug-only fallback: the green rectangle is a placement mask, not
+            # a production render. It must never replace the final image.
             pixel_polygon = normalized_to_pixel_polygon(polygon, image_width, image_height)
             x1, y1, x2, y2 = _bbox(pixel_polygon)
             draw.rounded_rectangle(
@@ -108,6 +111,13 @@ def render_placeholder_composite(
                 label[:28],
                 fill=(255, 255, 255, 255),
                 font=_font(),
+            )
+        else:
+            logger.warning(
+                "product_image_missing_skipping_overlay",
+                product_id=str(product.get("product_id", "")),
+                role=product.get("role"),
+                image_path=product.get("image_path"),
             )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -219,19 +229,82 @@ def _load_product_image_raw(
 ) -> Image.Image | None:
     """Load a product image as RGBA without resizing.
 
-    Returns *None* when the image is unavailable (remote URL, missing file,
-    or corrupt), which signals the caller to use the rectangle fallback.
+    Returns *None* when the image is unavailable, which signals the caller to
+    skip the normal render or draw a debug-only placement rectangle.
     """
-    if not image_path or image_path.startswith("http"):
-        return None
-    path = storage.resolve_product_image(image_path)
-    if not path.exists():
+    if not image_path:
         return None
     try:
-        with Image.open(path) as image:
-            return image.convert("RGBA").copy()
-    except Exception:
+        if image_path.startswith(("http://", "https://")):
+            response = requests.get(image_path, timeout=12)
+            response.raise_for_status()
+            with Image.open(BytesIO(response.content)) as image:
+                return _prepare_product_cutout(image)
+
+        for path in _candidate_product_paths(storage, image_path):
+            if not path.exists():
+                continue
+            with Image.open(path) as image:
+                return _prepare_product_cutout(image)
+    except Exception as exc:
+        logger.warning("product_image_load_failed", image_path=image_path, error=str(exc))
         return None
+    return None
+
+
+def _candidate_product_paths(storage: LocalImageStorage, image_path: str) -> list[Path]:
+    candidates = [storage.resolve_product_image(image_path)]
+    settings = storage.settings
+    relative = Path(image_path)
+    if not relative.is_absolute() and ".." not in relative.parts:
+        candidates.append((settings.local_image_root / relative).resolve())
+        candidates.append((settings.product_embedding_image_root / relative).resolve())
+    return list(dict.fromkeys(candidates))
+
+
+def _prepare_product_cutout(image: Image.Image) -> Image.Image:
+    rgba = image.convert("RGBA")
+    alpha = rgba.getchannel("A")
+    if alpha.getextrema() != (255, 255):
+        return rgba.copy()
+
+    background = _background_color_from_corners(rgba)
+    if background is None:
+        return rgba.copy()
+
+    pixels = rgba.load()
+    width, height = rgba.size
+    for y in range(height):
+        for x in range(width):
+            red, green, blue, current_alpha = pixels[x, y]
+            if max(
+                abs(red - background[0]),
+                abs(green - background[1]),
+                abs(blue - background[2]),
+            ) <= 24:
+                pixels[x, y] = (red, green, blue, 0)
+            else:
+                pixels[x, y] = (red, green, blue, current_alpha)
+    return rgba
+
+
+def _background_color_from_corners(image: Image.Image) -> tuple[int, int, int] | None:
+    width, height = image.size
+    if width == 0 or height == 0:
+        return None
+    corners = [
+        image.getpixel((0, 0))[:3],
+        image.getpixel((width - 1, 0))[:3],
+        image.getpixel((0, height - 1))[:3],
+        image.getpixel((width - 1, height - 1))[:3],
+    ]
+    average = tuple(
+        int(sum(color[index] for color in corners) / len(corners))
+        for index in range(3)
+    )
+    if min(average) < 210:
+        return None
+    return average
 
 
 def _bbox(polygon: list[list[float]]) -> tuple[float, float, float, float]:

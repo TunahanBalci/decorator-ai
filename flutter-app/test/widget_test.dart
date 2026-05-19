@@ -123,6 +123,27 @@ void main() {
     expect(product.top, closeTo(0.7, 0.001));
   });
 
+  test('backend design mapping uses final render instead of debug mask', () {
+    final project = DesignProject.fromBackendJson(
+      const {
+        'design_id': 'd1',
+        'title': 'Rendered Room',
+        'style': 'modern',
+        'final_rendered_image_url': 'generated/job/design_1_composite.png',
+        'debug_mask_url': 'generated/job/design_1_mask_0.png',
+        'products': <Map<String, dynamic>>[],
+      },
+      roomImageUrl: 'http://localhost:8000/images/rooms/original.png',
+      imageUrlBuilder: (path) => 'http://localhost:8000/images/$path',
+    );
+
+    expect(
+      project.imageUrl,
+      'http://localhost:8000/images/generated/job/design_1_composite.png',
+    );
+    expect(project.imageUrl, isNot(contains('mask')));
+  });
+
   testWidgets('product detail normalizes technical backend store names', (
     WidgetTester tester,
   ) async {

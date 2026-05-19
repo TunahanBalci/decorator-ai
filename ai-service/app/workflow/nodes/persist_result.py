@@ -27,6 +27,7 @@ def persist_result_node(db: Session):
                     "generated_image_path": (
                         generated_image.get("path") if generated_image else None
                     ),
+                    "generated_image": generated_image,
                     "placement_debug": state.get("placement_debug"),
                     "products": products,
                 }

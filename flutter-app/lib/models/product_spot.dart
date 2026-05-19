@@ -84,7 +84,8 @@ class ProductSpot {
 
     final rawScore = (json['score'] as num?)?.toDouble() ?? 0.0;
     final normalizedScore = rawScore <= 1 ? rawScore * 100 : rawScore;
-    final imagePath = json['image_path'] as String? ?? '';
+    final imagePath =
+        json['image_url'] as String? ?? json['image_path'] as String? ?? '';
     final storeName =
         json['store_name'] as String? ??
         json['storeName'] as String? ??

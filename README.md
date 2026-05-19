@@ -190,6 +190,12 @@ oda fotoğrafı pikseline çevirir. `DEBUG_PLACEMENT=true` olduğunda backend
 `generated/debug/{job_id}_placement.png` altında floor maskesi, kabul edilen noktalar
 ve reddedilen adayları gösteren bir debug görseli üretir.
 
+Oda fotoğrafı tasarım ilhamı olarak değil, boş mimari kabuk referansı olarak
+kullanılır. Varsayılan `IGNORE_EXISTING_FURNITURE=true` ayarında görünür mobilya
+ve dağınıklık stil, kategori seçimi, ürün arama veya re-rank skorunu etkilemez;
+yalnızca gerekirse obstacle bölgesi olarak tutulur. Ürün seçimi sadece projeye
+import edilmiş PostgreSQL/Qdrant ürün veri setinden yapılır.
+
 ### 4.5 Veritabanı ve Vektör Arama
 
 PostgreSQL kaynak gerçekliktir. Ürünler, ürün görselleri, tasarım job'ları, oluşturulmuş tasarımlar ve seçili ürünler burada tutulur.
@@ -199,7 +205,8 @@ Qdrant yalnızca retrieval için kullanılır. Ürün vektörleri ve filtre payl
 Ürün arama mantığı şu sinyalleri birleştirir:
 
 - Semantik metin benzerliği.
-- Oda fotoğrafı ile ürün görseli benzerliği.
+- Oda fotoğrafı ile ürün görseli benzerliği yalnızca `IGNORE_EXISTING_FURNITURE=false`
+  olduğunda kullanılır; varsayılan boş-oda modunda görünür mobilyalar retrieval sinyali değildir.
 - Stil, renk, malzeme, oda tipi, ölçü ve kategori filtreleri.
 - Deterministik re-rank skoru.
 
@@ -214,8 +221,10 @@ ai-service/data/images
 Container içinde bu dizin `/data/images` olarak mount edilir. API yanıtlarında mutlak path yerine relative path döner. Flutter tarafı bu relative path'i backend URL'sine ekleyerek `/images/...` üzerinden gösterir.
 
 Sprint 1 yerleşim renderer'ı gelişmiş image generation değildir; seçilen ürün görselini
-veya placeholder bloğunu normalize placement polygon'una basan basit bir Pillow composite
-üretir. Sprint 2 ile renderer perspektif farkındalıklı ölçekleme (düşük y = uzak = küçük,
+normalize placement polygon'una basan basit bir Pillow composite üretir. Normal modda
+ürün görseli yüklenemezse yeşil placement rectangle final render olarak çizilmez; bu
+yalnızca `DEBUG_PLACEMENT=true` debug çıktısında görülebilir. Sprint 2 ile renderer
+perspektif farkındalıklı ölçekleme (düşük y = uzak = küçük,
 yüksek y = yakın = büyük), alt-orta bağlama noktası ve yumuşak gölge oluşturma ile
 geliştirilmiştir. Sprint 3 ile renderer mimarisi takılabilir (pluggable) hale getirilmiştir:
 `RENDER_METHOD` ayarı ile `overlay` (varsayılan, GPU gerektirmez), `mock_inpaint` (maske +

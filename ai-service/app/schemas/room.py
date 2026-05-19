@@ -21,6 +21,7 @@ class RoomDimensions(BaseModel):
 class UserPreferences(BaseModel):
     mode: Literal["auto_design", "guided_design"] = "auto_design"
     replace_existing_furniture: bool = False
+    ignore_existing_furniture: bool | None = None
     requested_furniture_types: list[str] = Field(default_factory=list)
     replace_targets: list[str] = Field(default_factory=list)
     design_style: str | None = None
@@ -30,4 +31,3 @@ class UserPreferences(BaseModel):
     size: str | None = None
     budget: dict | None = None
     extra_preferences: str | None = None
-

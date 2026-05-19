@@ -17,15 +17,25 @@ def analyze_room_node(db: Session):
 
         if settings.mock_ai or not settings.vertex_project_id:
             logger.info("analyze_room_mock")
+            floor_polygon = [[260, 430], [1020, 430], [1120, 700], [160, 700]]
+            prefs = state.get("user_preferences", {})
             result = RoomAnalysisResult(
                 room_type="living_room",
-                detected_styles=[state.get("user_preferences", {}).get("design_style") or "unknown"],
-                color_palette=state.get("user_preferences", {}).get("colors") or [],
-                temperature=state.get("user_preferences", {}).get("temperature"),
+                detected_styles=[prefs.get("design_style") or "unknown"],
+                color_palette=prefs.get("colors") or [],
+                temperature=prefs.get("temperature"),
                 lighting="unknown",
                 existing_furniture=[],
+                existing_objects=[],
+                architectural_context={
+                    "room_type": "living_room",
+                    "floor_area": floor_polygon,
+                    "lighting": "unknown",
+                    "perspective": {},
+                    "empty_room_style_hint": prefs.get("design_style"),
+                },
                 available_placement_zones=[
-                    {"label": "central_floor", "polygon": [[260, 430], [1020, 430], [1120, 700], [160, 700]]}
+                    {"label": "central_floor", "polygon": floor_polygon}
                 ],
                 constraints={},
                 confidence=0.65,
@@ -43,6 +53,9 @@ def analyze_room_node(db: Session):
 
         prompt = (
             f"{prompt_template}\n\n"
+            "System config:\n"
+            f"ignore_existing_furniture: {settings.ignore_existing_furniture}\n"
+            f"remove_existing_furniture: {settings.remove_existing_furniture}\n\n"
             f"Room dimensions: {room_dims}\n"
             f"User preferences: {prefs}\n"
         )
@@ -56,7 +69,15 @@ def analyze_room_node(db: Session):
         if resolved.exists():
             images.append(resolved)
 
-        result = client.generate_json(prompt, RoomAnalysisResult, images=images or None, model_tier="pro")
-        return {"room_analysis": result.model_dump()}
+        result = client.generate_json(
+            prompt,
+            RoomAnalysisResult,
+            images=images or None,
+            model_tier="pro",
+        )
+        analysis = result.model_dump()
+        if settings.ignore_existing_furniture:
+            analysis["design_uses_existing_objects"] = False
+        return {"room_analysis": analysis}
 
     return node

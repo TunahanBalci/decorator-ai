@@ -8,7 +8,7 @@
 
 The AI Service is a **furniture recommendation backend**. A client uploads a room photograph, and the service:
 
-1. Analyzes the room (type, style, existing furniture, available zones)
+1. Analyzes the room as an empty architectural shell (type, permanent finishes, floor, windows, doors, lighting, perspective, available zones)
 2. Creates design strategies (creative furniture concepts)
 3. Retrieves matching products from a vector database using **hybrid text + image search**
 4. Ranks and selects the best products
@@ -226,6 +226,12 @@ The API is self-documenting via **OpenAPI**. When the service is running, visit:
             "score": 0.91
           }
         ],
+        "original_image_url": "rooms/2026/05/abc123.jpg",
+        "final_rendered_image_url": "generated/{job_id}/design_1_composite.png",
+        "render_method": "png_overlay_perspective",
+        "selected_product_id": "...",
+        "selected_product_image_url": "products/source/item/main.png",
+        "placement_coordinate": {"x": 0.43, "y": 0.84},
         "clickable_regions": [
           {
             "region_id": "...",
@@ -250,6 +256,17 @@ Placement polygons in API responses are canonical normalized coordinates from `0
 relative to the original uploaded room image: `x = x_pixel / image_width`,
 `y = y_pixel / image_height`. Convert back to pixels only when drawing a composite
 or mapping to Flutter screen coordinates.
+
+The main display image is always `final_rendered_image_url` / `image.path`.
+`debug_mask_url` and placement debug images are returned only when `DEBUG_PLACEMENT=true`
+and must never be used as the final room render.
+
+By default `IGNORE_EXISTING_FURNITURE=true`. Room analysis may return
+`existing_objects` / `existing_furniture` as obstacle regions, but design strategy,
+retrieval, reranking, and validation treat the uploaded photo as an empty architectural
+shell. Visible movable furniture does not influence style, category selection, or
+product scoring. Selected products must exist in the PostgreSQL product catalog and
+must include a usable product image path or URL.
 
 #### POST /products/search
 - **Request body**:
@@ -304,13 +321,13 @@ class DesignWorkflowState(TypedDict, total=False):
 | Node | AI Model | Description |
 |---|---|---|
 | `validate_input` | — | Checks job exists, image file present, clamps design count |
-| `analyze_room` | **Pro** | Vision analysis of room photo: type, styles, furniture, zones |
-| `create_design_strategies` | **Pro** | Generates creative design concepts based on room + preferences |
-| `retrieve_candidates` | Text + Image embeddings | **Hybrid search**: text vectors via text-embedding-005 + image vectors via multimodalembedding@001. Passes room image for visual similarity matching. |
-| `rerank_products` | — | Deterministic scoring: category, style, color, material fit |
+| `analyze_room` | **Pro** | Vision analysis of architectural shell: room type, permanent finishes, floor zones, windows/doors, lighting, perspective. Existing movable objects are obstacles only. |
+| `create_design_strategies` | **Pro** | Generates concepts from room type, user preferences, available zones, and supported catalog categories; ignores visible furniture. |
+| `retrieve_candidates` | Text + Image embeddings | Catalog-only search. With `IGNORE_EXISTING_FURNITURE=true`, it avoids room-image visual search so visible furniture cannot bias recommendations. |
+| `rerank_products` | — | Deterministic scoring from dataset metadata, style, color, material, room type, and spatial fit. Existing visible furniture is not a scoring signal. |
 | `plan_placements` | — | Validated normalized floor placements. Uses detected floor zones when reliable, otherwise bottom 45-55% fallback, and rejects wall/outside/overlap candidates. |
-| `generate_images` | — | Sprint 3 pluggable renderer via `rendering/factory.py`. Supports `render_method`: `overlay` (default, Sprint 2 perspective composite), `mock_inpaint` (simulated SDXL pipeline with mask/prompt generation), `sdxl_inpaint` (future GPU), `external_ai` (future API). Falls back to overlay when dependencies are missing. When `DEBUG_PLACEMENT=true`, writes debug composites, masks, and prompts. |
-| `validate_result` | — | Verifies all products have required placement fields |
+| `generate_images` | — | Sprint 3 pluggable renderer via `rendering/factory.py`. `overlay` opens the original room image, loads the selected product image, perspective-scales and anchors it, adds shadow, and saves the final composite. `mock_inpaint` creates masks/prompts for debug but returns the overlay composite as final. Debug masks are gated by `DEBUG_PLACEMENT=true`. |
+| `validate_result` | — | Verifies all selected products exist in the catalog, have dataset metadata, image paths/URLs, and required placement fields. |
 | `persist_result` | — | Saves final designs + selected products to PostgreSQL |
 
 ### Mock Mode

@@ -80,6 +80,7 @@ class DesignJobRepository:
                         for product in design.get("products", [])
                     ],
                     "debug": design.get("placement_debug"),
+                    "render": design.get("generated_image"),
                 },
                 confidence=design.get("confidence") or {},
             )

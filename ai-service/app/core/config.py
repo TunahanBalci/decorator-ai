@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     default_design_count: int = 3
     max_candidates_per_item: int = 50
     max_selected_per_design: int = 8
+    ignore_existing_furniture: bool = True
+    remove_existing_furniture: bool = False
 
     # -- Sprint 2: Perspective-aware rendering ----------------------------
     # Furniture scale range — lower y (far) gets min_scale, higher y (close)

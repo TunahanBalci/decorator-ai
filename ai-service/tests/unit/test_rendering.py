@@ -241,6 +241,86 @@ def test_overlay_renderer_produces_image(tmp_path: Path) -> None:
     assert result.render_method == "png_overlay_perspective"
 
 
+def test_overlay_renderer_pastes_product_image_not_green_mask(tmp_path: Path) -> None:
+    """Overlay final render should contain the product image, not a green mask."""
+    from app.core.config import Settings
+    from app.rendering.overlay_renderer import OverlayRenderer
+    from app.storage.local_storage import LocalImageStorage
+
+    settings = Settings(
+        local_image_root=tmp_path / "images",
+        room_upload_dir=tmp_path / "images" / "rooms",
+        product_image_dir=tmp_path / "images" / "products",
+        generated_image_dir=tmp_path / "images" / "generated",
+    )
+    storage = LocalImageStorage(settings)
+
+    room_path = storage.resolve_room_image("rooms/overlay_room.png")
+    product_path = storage.resolve_product_image("products/red-chair.png")
+    room_path.parent.mkdir(parents=True, exist_ok=True)
+    product_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGB", (500, 400), (220, 220, 220)).save(room_path)
+    Image.new("RGBA", (80, 120), (210, 40, 30, 255)).save(product_path)
+
+    result = OverlayRenderer().render(
+        storage=storage,
+        room_image_path="rooms/overlay_room.png",
+        products=[
+            {
+                "product_id": "chair-1",
+                "role": "armchair",
+                "image_path": "products/red-chair.png",
+                "polygon": [[0.4, 0.45], [0.6, 0.45], [0.6, 0.9], [0.4, 0.9]],
+            }
+        ],
+        output_relative_path="generated/overlay_final.png",
+    )
+
+    with Image.open(result.output_path).convert("RGB") as image:
+        pixels = list(image.getdata())
+    red_pixels = sum(1 for red, green, blue in pixels if red > 150 and green < 90 and blue < 90)
+    green_pixels = sum(1 for red, green, blue in pixels if green > 120 and red < 120 and blue < 120)
+    assert red_pixels > 200
+    assert green_pixels < red_pixels
+
+
+def test_overlay_missing_image_does_not_draw_green_rectangle_in_normal_mode(tmp_path: Path) -> None:
+    """Missing product images should not turn final output into a debug rectangle."""
+    from app.core.config import Settings
+    from app.rendering.overlay_renderer import OverlayRenderer
+    from app.storage.local_storage import LocalImageStorage
+
+    settings = Settings(
+        local_image_root=tmp_path / "images",
+        room_upload_dir=tmp_path / "images" / "rooms",
+        product_image_dir=tmp_path / "images" / "products",
+        generated_image_dir=tmp_path / "images" / "generated",
+        debug_placement=False,
+    )
+    storage = LocalImageStorage(settings)
+    room_path = storage.resolve_room_image("rooms/no_image_room.png")
+    room_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGB", (320, 240), (230, 225, 215)).save(room_path)
+
+    with patch("app.utils.composite.get_settings", return_value=settings):
+        result = OverlayRenderer().render(
+            storage=storage,
+            room_image_path="rooms/no_image_room.png",
+            products=[
+                {
+                    "product_id": "missing",
+                    "role": "sofa",
+                    "image_path": "products/missing.png",
+                    "polygon": [[0.2, 0.4], [0.8, 0.4], [0.8, 0.9], [0.2, 0.9]],
+                }
+            ],
+            output_relative_path="generated/no_green.png",
+        )
+
+    with Image.open(result.output_path).convert("RGB") as image:
+        assert image.getpixel((160, 150)) == (230, 225, 215)
+
+
 # ---------------------------------------------------------------------------
 # Mock inpaint renderer
 # ---------------------------------------------------------------------------
@@ -322,7 +402,12 @@ def test_mock_inpaint_no_debug_without_flag(tmp_path: Path) -> None:
         result = renderer.render(
             storage=storage,
             room_image_path="rooms/nodebug.png",
-            products=[{"role": "lamp", "polygon": [[0.4, 0.5], [0.6, 0.5], [0.6, 0.8], [0.4, 0.8]]}],
+            products=[
+                {
+                    "role": "lamp",
+                    "polygon": [[0.4, 0.5], [0.6, 0.5], [0.6, 0.8], [0.4, 0.8]],
+                }
+            ],
             output_relative_path="generated/nodebug.png",
         )
 
@@ -331,6 +416,52 @@ def test_mock_inpaint_no_debug_without_flag(tmp_path: Path) -> None:
     assert len(mask_keys) == 0
     # Prompts should still be generated.
     assert "prompts" in result.debug_artifacts
+
+
+def test_mock_inpaint_final_image_comes_from_overlay(tmp_path: Path) -> None:
+    """Mock inpaint should return overlay result as final, not the mask image."""
+    from app.core.config import Settings
+    from app.rendering.mock_inpaint_renderer import MockInpaintRenderer
+    from app.storage.local_storage import LocalImageStorage
+
+    settings = Settings(
+        local_image_root=tmp_path / "images",
+        room_upload_dir=tmp_path / "images" / "rooms",
+        product_image_dir=tmp_path / "images" / "products",
+        generated_image_dir=tmp_path / "images" / "generated",
+        debug_placement=True,
+    )
+    storage = LocalImageStorage(settings)
+    room_path = storage.resolve_room_image("rooms/mock_overlay_room.png")
+    product_path = storage.resolve_product_image("products/blue-table.png")
+    room_path.parent.mkdir(parents=True, exist_ok=True)
+    product_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGB", (480, 360), (235, 232, 225)).save(room_path)
+    Image.new("RGBA", (90, 60), (30, 80, 210, 255)).save(product_path)
+
+    with patch("app.rendering.mock_inpaint_renderer.get_settings", return_value=settings):
+        with patch("app.utils.composite.get_settings", return_value=settings):
+            result = MockInpaintRenderer().render(
+                storage=storage,
+                room_image_path="rooms/mock_overlay_room.png",
+                products=[
+                    {
+                        "product_id": "table-1",
+                        "role": "coffee_table",
+                        "image_path": "products/blue-table.png",
+                        "metadata": {},
+                        "polygon": [[0.35, 0.55], [0.65, 0.55], [0.65, 0.88], [0.35, 0.88]],
+                    }
+                ],
+                output_relative_path="generated/mock_overlay_final.png",
+            )
+
+    assert result.relative_path == "generated/mock_overlay_final.png"
+    assert result.output_path.exists()
+    assert result.debug_artifacts["mask_0"].endswith("_mask_0.png")
+    with Image.open(result.output_path).convert("RGB") as image:
+        blue_pixels = sum(1 for red, green, blue in image.getdata() if blue > 150 and red < 100)
+    assert blue_pixels > 100
 
 
 # ---------------------------------------------------------------------------
@@ -363,7 +494,12 @@ def test_external_ai_falls_back_to_overlay(tmp_path: Path) -> None:
         result = renderer.render(
             storage=storage,
             room_image_path="rooms/ext_test.png",
-            products=[{"role": "desk", "polygon": [[0.2, 0.3], [0.8, 0.3], [0.8, 0.9], [0.2, 0.9]]}],
+            products=[
+                {
+                    "role": "desk",
+                    "polygon": [[0.2, 0.3], [0.8, 0.3], [0.8, 0.9], [0.2, 0.9]],
+                }
+            ],
             output_relative_path="generated/ext_test.png",
         )
 

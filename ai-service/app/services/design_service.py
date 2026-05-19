@@ -57,12 +57,18 @@ class DesignService:
     def _design_out(self, design) -> DesignOut:
         regions = []
         products = []
+        first_selected = None
+        first_image_path = None
         for selected in design.selected_products:
+            if first_selected is None:
+                first_selected = selected
             product = selected.product
             primary = next(
                 (img for img in product.images if img.is_primary),
                 product.images[0] if product.images else None,
             )
+            if first_image_path is None and primary:
+                first_image_path = primary.relative_path
             store_name = normalize_store_name_from_url(product.source_url)
             if selected.polygon:
                 regions.append(
@@ -83,6 +89,7 @@ class DesignService:
                     role=selected.role,
                     source_url=product.source_url,
                     image_path=primary.relative_path if primary else None,
+                    image_url=primary.relative_path if primary else None,
                     price={
                         "amount": float(product.price_amount),
                         "currency": product.price_currency,
@@ -96,20 +103,58 @@ class DesignService:
         placement_debug = (
             (design.placement_plan or {}).get("debug") if design.placement_plan else None
         )
+        render_meta = (
+            (design.placement_plan or {}).get("render") if design.placement_plan else None
+        ) or {}
+        debug_artifacts = render_meta.get("debug_artifacts") or {}
+        debug_mask_url = None
+        if placement_debug:
+            debug_mask_url = next(
+                (
+                    value
+                    for key, value in debug_artifacts.items()
+                    if key.startswith("mask_") and isinstance(value, str)
+                ),
+                None,
+            )
         image_payload = None
         if design.generated_image_path:
             image_payload = {
                 "path": design.generated_image_path,
+                "original_image_url": design.design_job.input_room_image_path,
+                "final_rendered_image_url": design.generated_image_path,
+                "render_method": render_meta.get("renderer"),
                 "width": placement_debug.get("image_width") if placement_debug else None,
                 "height": placement_debug.get("image_height") if placement_debug else None,
+                **({"debug_mask_url": debug_mask_url} if debug_mask_url else {}),
             }
+        placement_coordinate = (
+            _placement_coordinate(first_selected.polygon) if first_selected else None
+        )
         return DesignOut(
             design_id=design.id,
             title=design.title,
             style=design.style,
             summary=design.summary,
             image=image_payload,
+            original_image_url=design.design_job.input_room_image_path,
+            final_rendered_image_url=design.generated_image_path,
+            render_method=render_meta.get("renderer"),
+            selected_product_id=first_selected.product_id if first_selected else None,
+            selected_product_image_url=first_image_path,
+            placement_coordinate=placement_coordinate,
+            debug_mask_url=debug_mask_url,
             placement_debug=placement_debug,
             clickable_regions=regions,
             products=products,
         )
+
+
+def _placement_coordinate(polygon: list | dict | None) -> dict | None:
+    if not polygon or not isinstance(polygon, list):
+        return None
+    xs = [point[0] for point in polygon if isinstance(point, list) and len(point) >= 2]
+    ys = [point[1] for point in polygon if isinstance(point, list) and len(point) >= 2]
+    if not xs or not ys:
+        return None
+    return {"x": (min(xs) + max(xs)) / 2, "y": max(ys)}

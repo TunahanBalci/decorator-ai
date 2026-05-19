@@ -78,12 +78,23 @@ class DesignProject {
     }).toList();
 
     final image = json['image'] as Map<String, dynamic>?;
-    final generatedImagePath = image?['path'] as String?;
+    final finalRenderedImagePath =
+        json['final_rendered_image_url'] as String? ??
+        image?['final_rendered_image_url'] as String? ??
+        image?['path'] as String?;
+    final debugMaskPath =
+        json['debug_mask_url'] as String? ??
+        image?['debug_mask_url'] as String?;
+    final safeFinalPath =
+        finalRenderedImagePath != null &&
+            finalRenderedImagePath != debugMaskPath
+        ? finalRenderedImagePath
+        : null;
     final designImageUrl =
-        generatedImagePath != null &&
-            generatedImagePath.isNotEmpty &&
+        safeFinalPath != null &&
+            safeFinalPath.isNotEmpty &&
             imageUrlBuilder != null
-        ? imageUrlBuilder(generatedImagePath)
+        ? imageUrlBuilder(safeFinalPath)
         : roomImageUrl;
 
     return DesignProject(

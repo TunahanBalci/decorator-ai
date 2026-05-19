@@ -329,10 +329,10 @@ Camera-facing changes need tests where practical and careful manual/platform ver
 `DesignDetailPage`:
 
 - Shows design title and metadata.
-- Displays a large room image with normalized product hotspots.
+- Displays the backend `final_rendered_image_url` / `image.path` as the large room image when present, falling back to the original uploaded room image only when no final render exists.
 - Lists clickable product tiles.
 
-Hotspot coordinates are normalized against the displayed image area. Backend scan results use normalized `clickable_regions[].polygon` values from `0.0` to `1.0`; the Flutter model derives `ProductSpot.left/top` from the polygon center and converts to screen pixels only inside the image `LayoutBuilder`. Preserve this contract when changing image layout.
+Hotspot coordinates are normalized against the displayed image area. Backend scan results use normalized `clickable_regions[].polygon` values from `0.0` to `1.0`; the Flutter model derives `ProductSpot.left/top` from the polygon center and converts to screen pixels only inside the image `LayoutBuilder`. `debug_mask_url` and placement masks are debug artifacts and must not be used as the main image. Preserve this contract when changing image layout.
 
 ### Product Detail
 

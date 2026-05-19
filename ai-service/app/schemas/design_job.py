@@ -33,6 +33,7 @@ class ProductCard(BaseModel):
     role: str | None = None
     source_url: str | None = None
     image_path: str | None = None
+    image_url: str | None = None
     price: dict | None = None
     reason: str | None = None
     score: float | None = None
@@ -51,6 +52,13 @@ class DesignOut(BaseModel):
     style: str | None
     summary: str | None
     image: dict | None = None
+    original_image_url: str | None = None
+    final_rendered_image_url: str | None = None
+    render_method: str | None = None
+    selected_product_id: UUID | None = None
+    selected_product_image_url: str | None = None
+    placement_coordinate: dict | None = None
+    debug_mask_url: str | None = None
     placement_debug: dict | None = None
     clickable_regions: list[ClickableRegion] = Field(default_factory=list)
     products: list[ProductCard] = Field(default_factory=list)

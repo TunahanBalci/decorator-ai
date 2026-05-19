@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.schemas.design_job import ProductCard
+from app.schemas.design_job import DesignOut, ProductCard
 from app.schemas.room import RoomDimensions, UserPreferences
 from app.utils.store_names import normalize_store_name_from_url
 
@@ -16,6 +16,7 @@ def test_preferences_defaults() -> None:
     prefs = UserPreferences()
     assert prefs.mode == "auto_design"
     assert prefs.colors == []
+    assert prefs.ignore_existing_furniture is None
 
 
 
@@ -37,6 +38,24 @@ def test_product_card_includes_frontend_mapping_fields() -> None:
     assert card.role == "coffee_table"
     assert card.source_url == "https://www.ikea.com.tr/urun/oak-table"
     assert card.score == 0.91
+
+
+def test_design_out_exposes_final_render_fields() -> None:
+    design = DesignOut(
+        design_id="00000000-0000-0000-0000-000000000002",
+        title="Overlay Render",
+        style="modern",
+        summary="Rendered from catalog furniture.",
+        original_image_url="rooms/input.png",
+        final_rendered_image_url="generated/job/design_1_composite.png",
+        render_method="png_overlay_perspective",
+        selected_product_id="00000000-0000-0000-0000-000000000001",
+        selected_product_image_url="products/chair.png",
+        placement_coordinate={"x": 0.5, "y": 0.82},
+    )
+
+    assert design.final_rendered_image_url == "generated/job/design_1_composite.png"
+    assert design.debug_mask_url is None
 
 
 def test_normalize_store_name_from_source_url() -> None:

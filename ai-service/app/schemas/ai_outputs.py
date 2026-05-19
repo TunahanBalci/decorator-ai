@@ -26,6 +26,17 @@ class RoomStyleProfile(BaseModel):
     design_mood: str | None = None
 
 
+class ArchitecturalContext(BaseModel):
+    room_type: str = "living_room"
+    floor_area: list[list[float]] = Field(default_factory=list)
+    walls: list[dict] = Field(default_factory=list)
+    windows: list[dict] = Field(default_factory=list)
+    doors: list[dict] = Field(default_factory=list)
+    lighting: str | None = None
+    perspective: dict = Field(default_factory=dict)
+    empty_room_style_hint: str | None = None
+
+
 class RoomAnalysisResult(BaseModel):
     schema_version: str = "1.0"
     room_type: str
@@ -34,6 +45,8 @@ class RoomAnalysisResult(BaseModel):
     temperature: str | None = None
     lighting: str | None = None
     existing_furniture: list[DetectedFurniture] = Field(default_factory=list)
+    existing_objects: list[DetectedFurniture] = Field(default_factory=list)
+    architectural_context: ArchitecturalContext | None = None
     available_placement_zones: list[PlacementZone] = Field(default_factory=list)
     constraints: dict = Field(default_factory=dict)
     confidence: float = Field(validation_alias=AliasChoices('confidence', 'overall_confidence'))
@@ -79,4 +92,3 @@ class ProductPlacement(BaseModel):
 
 class PlacementPlan(BaseModel):
     placements: list[ProductPlacement]
-

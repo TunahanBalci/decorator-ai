@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.schemas.ai_outputs import ProductRetrievalIntent
 from app.vector.product_search import search_products
 from app.workflow.nodes.helpers import progress
@@ -10,10 +11,15 @@ def retrieve_candidates_node(db: Session):
     def node(state: DesignWorkflowState) -> DesignWorkflowState:
         progress(db, state, "retrieve_candidates")
         prefs = state.get("user_preferences", {})
+        settings = get_settings()
         room_analysis = state.get("room_analysis", {})
         room_dimensions = state.get("room_dimensions", {})
         candidate_products: dict[str, list[dict]] = {}
         intents = []
+        room_type = _room_type(room_analysis)
+        room_image_for_search = (
+            None if settings.ignore_existing_furniture else state.get("room_image_path")
+        )
         for strategy in state.get("design_strategies", []):
             for role in strategy["furniture_roles"]:
                 intent = ProductRetrievalIntent(
@@ -23,7 +29,7 @@ def retrieve_candidates_node(db: Session):
                     material=[prefs["material"]] if prefs.get("material") else [],
                     colors=prefs.get("colors") or [],
                     temperature=prefs.get("temperature"),
-                    room_types=[room_analysis.get("room_type", "living_room")],
+                    room_types=[room_type],
                     query_text=f"{strategy.get('style', '')} {role}".strip(),
                     **_dimension_bounds(role, room_dimensions),
                 )
@@ -31,12 +37,16 @@ def retrieve_candidates_node(db: Session):
                 intents.append(intent.model_dump())
                 candidate_products[key] = [
                     c.model_dump(mode="json")
-                    for c in search_products(db, intent, room_image_path=state.get("room_image_path"))
+                    for c in search_products(db, intent, room_image_path=room_image_for_search)
                 ]
         return {"retrieval_intents": intents, "candidate_products": candidate_products}
 
     return node
 
+
+def _room_type(room_analysis: dict) -> str:
+    architectural_context = room_analysis.get("architectural_context") or {}
+    return architectural_context.get("room_type") or room_analysis.get("room_type", "living_room")
 
 
 def _dimension_bounds(role: str, room_dimensions: dict) -> dict:

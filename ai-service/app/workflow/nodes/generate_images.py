@@ -72,8 +72,7 @@ def generate_images_node(db: Session):
                         "skew_enabled": settings.enable_perspective_skew,
                         "mask_dilation_px": settings.mask_dilation_px,
                     },
-                    # Sprint 3: include debug artifacts from the renderer.
-                    "debug_artifacts": result.debug_artifacts or {},
+                    "debug_artifacts": result.debug_artifacts if settings.debug_placement else {},
                 }
             )
 
