@@ -1,0 +1,13 @@
+spring:
+  application:
+    mode: ${APP_MODE} # expected: development / production
+    name: decorator-ai
+    encoding: "@project.build.sourceEncoding@"
+    java:
+      version: "@java.version@"
+  datasource:
+    user: ${DATASOURCE_USER}
+    password: ${DATASOURCE_PASSWORD}
+    url: ${DATASOURCE_URL}
+    driver-class-name: ${DATASOURCE_DRIVER} # expected: org.postgresql.Driver
+    ssl: ${DATASOURCE_SLL} # expected: true / false
